@@ -118,7 +118,7 @@ if ($dataApi->SUCCESS != 'YES') : // Si la respuesta de la API de WF es NO
     exit; // Salgo deL SCRIPT
 endif;
 
-($dataApi->count > 0) ? '' : fileLogs("No Hay Novedades Pendientes\n", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk') . respuestaScript('No Hay Novedades Pendientes', 'ok') . sqlsrv_close($link) . exit; // Verifico si la API devuelve datos, sino salgo del script
+($dataApi->count > 0) ? '' : fileLogs("No Hay Novedades Pendientes", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk') . respuestaScript('No Hay Novedades Pendientes', 'ok') . sqlsrv_close($link) . exit; // Verifico si la API devuelve datos, sino salgo del script
 /** */
 
 /** Obtener Personal de CH */
