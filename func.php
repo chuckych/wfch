@@ -624,13 +624,14 @@ function respuestaScript($mensaje, $status) // genera la respuesta del script cu
 {
     $_GET['script'] = $_GET['script'] ?? false; // si no existe el parametro script, lo setea a false
     if ($_GET['script']) { // si es una petición con el parametro get script=true
-        $data = array('status' => $status, 'Mensaje' => $mensaje); // Mensaje
+        header("Content-Type: application/json; charset=utf-8"); // json response
+        $data = array('status' => $status, 'Mensaje' => "<br><br>$mensaje"); // Mensaje
         echo json_encode($data); // devuelve el json con la respuesta
         exit(); // Salir
     }
     $_GET['echo'] = $_GET['echo'] ?? false; // si no existe el parametro echo, lo setea a false
     if ($_GET['echo']) { // si es una petición con el parametro get echo=true
-        echo ($mensaje); // devuelve la respuesta
+        echo $mensaje; // devuelve la respuesta
         exit(); // Salir
     }
     $_GET['html'] = $_GET['html'] ?? false; // si no existe el parametro html, lo setea a false

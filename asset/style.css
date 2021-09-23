@@ -1,5 +1,4 @@
-html,
-body {
+html, body {
     scroll-behavior: smooth;
     font-style: normal;
     font-display: swap;
@@ -48,7 +47,6 @@ input {
 
 .form-switch .form-check-input {
     transition: background-position .3s ease-in-out !important;
-    
 }
 
 .btn-primary {
@@ -56,10 +54,11 @@ input {
     border-color: #66615b !important;
     color: #fff !important;
 }
-.btn{
+
+.btn {
     border-radius: 0px !important;
     box-shadow: none !important;
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; 
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15)!important;
 }
 
 .alert {

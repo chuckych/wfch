@@ -13,7 +13,6 @@ require __DIR__ . '/func.php'; // Funciones
 require __DIR__ . '/conn.php'; // Conexion bd
 
 /** Borrar archivos de log */
-
 $pathLog = __DIR__ . "/logs/novedades/"; // Ruta del archivo de log
 $dias    = $dataJson['borrarLogs']['dias']; // Dias a borrar
 $ext     = ".log"; // Extensión de los archivos de novedades
@@ -30,7 +29,6 @@ borrarLogs($pathLog, $dias, $ext);
 
 $pathLog = __DIR__ . "/logs/info/"; // Ruta del archivo de log de informacion
 borrarLogs($pathLog, $dias, $ext);
-
 /**  */
 
 /** Valores del archivo config.json */
@@ -59,6 +57,7 @@ $data      = array(); // Array para almacenar los datos
 $FechaHora = date('Ymd H:i:s'); // Fecha y hora actual
 $textLog   = ''; // Texto para el log
 $textLog  .= "\n";
+
 /** Obtener Novedades de CH */
 require __DIR__ . '/novedades.php';  // Novedades
 /** Este objeto devuelve un array con los datos de las novedades de control horario
