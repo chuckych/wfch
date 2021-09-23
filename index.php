@@ -1,5 +1,4 @@
 <?php
-
 /** Autor: Norberto CH: nchaquer@gmail.com */
 ini_set('max_execution_time', 900); // 15 minutos de tiempo maximo de ejecución
 header("Content-Type: application/json; charset=utf-8"); // json response
@@ -9,9 +8,20 @@ error_reporting(E_ALL); // Reportar todos Los errores
 ini_set('display_errors', '0'); // 0 - off 1 - on 
 $tiempo_ini = microtime(true); // Tiempo inicial
 
+$_SERVER["argv"][1] = $_SERVER["argv"][1] ?? "";
+$_GET['script']     = $_GET['script'] ?? "";
+$_GET['html']       = $_GET['html'] ?? "";
+
 require __DIR__ . '/func.php'; // Funciones
 require __DIR__ . '/conn.php'; // Conexion bd
 
+if($_SERVER["argv"][1] != 'tarea' && $_SERVER["argv"][1] != 'echo' && $_GET['script'] != true && $_GET['html'] != true){
+    $textArg = "\"Error al ejecutar el script. No se establecio un argumento o parametro valido\"";
+    echo $textArg;
+    fileLogs($textArg, __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
+    fileLogs($textArg, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
+    exit;
+}
 /** Borrar archivos de log */
 $pathLog = __DIR__ . "/logs/novedades/"; // Ruta del archivo de log
 $dias    = $dataJson['borrarLogs']['dias']; // Dias a borrar

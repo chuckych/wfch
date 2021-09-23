@@ -1,4 +1,4 @@
-﻿<?php 
+﻿<?php
 function defaultConfigData() // default config data
 {
     $datos = array(
@@ -68,7 +68,7 @@ function filtrarObjeto($array, $key, $valor) // Funcion para filtrar un objeto
 function descTipoNov($var) // Funcion para obtener la descripcion del tipo de novedad
 {
     switch (intval($var)) { // Switch para obtener la descripcion del tipo de novedad
-        case 0: 
+        case 0:
             $tipo = 'Llegada tarde';
             break;
         case 1:
@@ -223,11 +223,48 @@ function sendApiData($url, $auth, $proxy, $timeout = 10, $data) // Enviar datos 
     return ($data_content) ? $data_content : fileLog("No hay datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log"); // si no hay datos, escribir en el log
     exit;
 }
+function tipoEjecucion()  // Función para saber desde donde se ejuca el script
+{
+    /** para que se cumplan estas condiciones hay que indicar el parametro get para cada ejecución, siempre que se ejecute desde un servidor web.
+     * los argumentos que se pueden pasar son:
+     * - "script=true" para ejecutar el script desde el servidor web
+     * - "html=true" para ejecutar el script desde el navegador
+     * - Si se ejecuta el script desde un cron solo poner el parametro "index.php tarea"  en los argumentos de la accion
+     */
+    $_GET['script'] = $_GET['script'] ?? false;  // Si no se indica el parametro script, se asigna false
+    $_GET['html']   = $_GET['html'] ?? false; // Si no se indica el parametro html, se asigna false
+
+    $_SERVER["REQUEST_METHOD"] = $_SERVER["REQUEST_METHOD"] ?? 'GET'; // Si no se indica el parametro REQUEST_METHOD, se asigna GET
+
+    $tipoArgv = $_SERVER["argv"][1] ?? ''; // Si no se indica el parametro argv, se asigna ''
+    $tipoEjecucion = ''; // Variable para almacenar el tipo de ejecucion
+    switch ($tipoArgv) { // Si se indica el parametro argv
+        case 'tarea': // Si se indica el parametro tarea
+            $tipoEjecucion = ' (T)'; // Se asigna el tipo de ejecucion
+            break; 
+        case 'echo': // Si se indica el parametro echo
+            $tipoEjecucion = ' (C)'; // Se asigna el tipo de ejecucion
+            break; 
+    }   
+
+    switch ($_SERVER["REQUEST_METHOD"]) { // obtener el metodo de la peticion
+        case ($_GET['script'] == true): // Si se indica el parametro script
+            $tipo = ' (M)'; // Manual
+            break;
+        case ($_GET['html'] == true): // Si se indica el parametro html
+            $tipo = ' (H)'; // HTML
+            break;
+        default:
+            $tipo = '';
+            break;
+    }
+    return $tipo . $tipoEjecucion;
+}
 function fileLog($text, $ruta_archivo) // escribir en el log
 {
     $log    = fopen($ruta_archivo, 'a');
     $date   = date('d-m-Y H:i:s');
-    $text   = $date . ' ' . $text . "\n";
+    $text   = $date . ' ' . $text . tipoEjecucion() . "\n";
     fwrite($log, $text);
     fclose($log);
 }
@@ -565,7 +602,7 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
     $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
     $date     = date('d-m-Y H:i:s'); // obtenemos la fecha actual
     $textJson = $text; // obtenemos el texto a escribir
-    $text     = $date . ' ' . $text . "\n"; // armamos el texto a escribir
+    $text     = $date . ' ' . $text . tipoEjecucion() . "\n"; // armamos el texto a escribir
     switch ($tipo): // según el tipo de log
         case 'novOk': // si es un log de novedades exitosa
             if ($logNovedadesOk) : // si está activado el log de novedades exitosa
@@ -622,21 +659,26 @@ function getDataJson($url) // obtiene el json de la url
 }
 function respuestaScript($mensaje, $status) // genera la respuesta del script cuando parametro get script=true
 {
+
+    $tipo = tipoEjecucion(); // obtenemos el tipo de ejecución
+
+    echo (($_SERVER["argv"][1] ?? '') == 'echo') ? $mensaje . $tipo : '';  // si el argumento es echo, escribimos en pantalla
+
     $_GET['script'] = $_GET['script'] ?? false; // si no existe el parametro script, lo setea a false
     if ($_GET['script']) { // si es una petición con el parametro get script=true
         header("Content-Type: application/json; charset=utf-8"); // json response
-        $data = array('status' => $status, 'Mensaje' => "<br><br>$mensaje"); // Mensaje
+        $data = array('status' => $status, 'Mensaje' => "<br><br>$mensaje.$tipo"); // Mensaje
         echo json_encode($data); // devuelve el json con la respuesta
         exit(); // Salir
     }
     $_GET['echo'] = $_GET['echo'] ?? false; // si no existe el parametro echo, lo setea a false
     if ($_GET['echo']) { // si es una petición con el parametro get echo=true
-        echo $mensaje; // devuelve la respuesta
+        echo $mensaje . $tipo; // devuelve la respuesta
         exit(); // Salir
     }
     $_GET['html'] = $_GET['html'] ?? false; // si no existe el parametro html, lo setea a false
     if ($_GET['html']) { // si es una petición con el parametro get html=true
-        echo "<html style='width:100%; height:100%; background-color: #ddd'><h3><div style='padding:20px;'>$mensaje</div></h3></html>"; // devuelve la respuesta
+        echo "<html style='width:100%; height:100%; background-color: #ddd'><h3><div style='padding:20px;'>$mensaje$tipo</div></h3></html>"; // devuelve la respuesta
         exit(); // Salir
     }
 }
