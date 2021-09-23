@@ -613,10 +613,10 @@ function getDataJson($url) // obtiene el json de la url
             $data = json_decode($data, true); // decodificamos el json
             return $data; // devolvemos el json
         } else { // si el contenido está vacío
-            fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/informacion.log", ''); // escribimos en el log
+            fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
         }
     } else { // si no existe el archivo
-        fileLog("No existe archivo \"$url\"", __DIR__ . "/logs/info/informacion.log", ''); // escribimos en el log
+        fileLog("No existe archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
         return false; // devolvemos false
     }
 }
