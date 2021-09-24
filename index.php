@@ -311,7 +311,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
 }
 $tiempo_fin = microtime(true);
 $duracion   = (round($tiempo_fin - $tiempo_ini, 2));
-$textNov = "Fin de Ingreso de Novedades. Dur: \"$duracion Segundos\"\n";
+$textNov = "Fin de Ingreso de Novedades. Dur: \"$duracion Segundos\"";
 $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log"; // Ruta del archivo de log
 fileLogs($textNov, $pathLog, 'novOk'); // Guardamos el texto de Fin de Ingreso de Novedades en el archivo de log
 sqlsrv_close($link);
