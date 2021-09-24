@@ -16,7 +16,7 @@ require __DIR__ . '/func.php'; // Funciones
 require __DIR__ . '/conn.php'; // Conexion bd
 
 if($_SERVER["argv"][1] != 'tarea' && $_SERVER["argv"][1] != 'echo' && $_GET['script'] != true && $_GET['html'] != true){
-    $textArg = "\"Error al ejecutar el script. No se establecio un argumento o parametro valido\"";
+    $textArg = "Error al ejecutar el script. No se establecio un argumento o parametro valido";
     echo $textArg;
     fileLogs($textArg, __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
     fileLogs($textArg, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
@@ -246,13 +246,13 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     $terminadoProc = true; // Se cambia la bandera
                     $finProc    = microtime(true); // Tiempo de finalizacion de proceso de la novedad
                     $durProc    = (round($finProc - $iniProc, 2)); // Duracion de de proceso de la novedad
-                    $textNov = 'Novedad "(' . $value['CodNov'] . ')" "' . trim($value['NovDesc']) . '". Procesada  "SI". Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '". Fechas: "' . $date['fecha_desde'] . '" al "' . $fechaHastaProc . '". Horas: "' . $value['horas'] . '" Dur: ' . $durProc;
+                    $textNov = 'Novedad "(' . $value['CodNov'] . ')" "' . trim($value['NovDesc']) . '". Procesada  "SI". Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '". Fechas: "' . $date['fecha_desde'] . '" al "' . $fechaHastaProc . '". Horas: "' . $value['horas'] . '" Dur: ' . $durProc; // Texto de la novedad ingresada para gardar en el log
                     $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log"; // Ruta del archivo de log
                     fileLogs($textNov, $pathLog, 'novOk'); // Guardamos el texto de la novedad en el archivo de log
                 else :
                     $terminadoProc = false; // Se cambia la bandera
-                    $textNov = 'Novedad "(' . $value['CodNov'] . ')" ' . trim($value['NovDesc']) . '. Procesada: "NO". Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '". Fechas: "' . $date['fecha_desde'] . ' al ' . $fechaHastaProc . '". Horas: "' . $value['horas'] . '" Dur: ' . $durProc;
-                    $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_error.log";
+                    $textNov = 'Novedad "(' . $value['CodNov'] . ')" ' . trim($value['NovDesc']) . '. Procesada: "NO". Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '". Fechas: "' . $date['fecha_desde'] . ' al ' . $fechaHastaProc . '". Horas: "' . $value['horas'] . '" Dur: ' . $durProc; // Texto de la novedad no ingresada para gardar en el log
+                    $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_error.log"; // Ruta del archivo de log
                     fileLogs($textNov, $pathLog, 'novErr'); // Guardamos el texto de la novedad en el archivo de log
                 endif;
             endif;
@@ -306,7 +306,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
 
     $finRegWF = microtime(true); // Tiempo de finalizacion del envio al Api
     $durRegWF = (round($finRegWF - $iniRegWF, 2)); // Duracion del envio al Api
-    fileLogs("Fin ID Registro WF: " . $value["id_out"] . ". Dur: $durRegWF\n", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de Fin ID Registro WF en el archivo de log
+    fileLogs("Fin ID Registro WF: " . $value["id_out"] . ". Dur: $durRegWF", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de Fin ID Registro WF en el archivo de log
     // break;
 }
 $tiempo_fin = microtime(true);
