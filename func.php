@@ -148,10 +148,11 @@ function apiData($url, $auth, $proxy, $timeout = 10) // Función para obtener da
     if ($curl_errno > 0) { // si hay error
         $text = "cURL Error ($curl_errno): $curl_error"; // set error message
         fileLog($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorAPI_WF.log"); // escribir en el log
+        fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
         exit; // salimos del script
     }
     curl_close($ch); // close curl handle
-    return ($data_content) ? $data_content : fileLog("No datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log"); // si no hay datos, escribir en el log
+    return ($data_content) ? $data_content : fileLog("No datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log").fileLog("No datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // si no hay datos, escribir en el log
     exit;
 }
 function pingApi($url, $auth, $proxy, $timeout = 5) // Función para verificar la conexión a la API
@@ -181,11 +182,12 @@ function pingApi($url, $auth, $proxy, $timeout = 5) // Función para verificar l
     if ($curl_errno > 0) { // si hay error
         $text = "cURL Error ($curl_errno): $curl_error"; // set error message
         fileLog($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorPingAPI_WF.log"); // escribir en el log
+        fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
         respuestaScript($text, 'Error');
         exit; // salimos del script
     }
     curl_close($ch); // close curl handle
-    return ($data_content) ? $data_content : fileLog("Error Ping API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log") . respuestaScript('Error Ping API WF', 'Error'); // si no hay datos, escribir en el log
+    return ($data_content) ? $data_content : fileLog("Error Ping API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log") . respuestaScript('Error Ping API WF', 'Error').fileLog('Error Ping API WF', __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
     exit;
 }
 function sendApiData($url, $auth, $proxy, $timeout = 10, $data) // Enviar datos a la API
@@ -216,14 +218,15 @@ function sendApiData($url, $auth, $proxy, $timeout = 10, $data) // Enviar datos 
     if ($curl_errno > 0) { // si hay error
         $text = "cURL Error ($curl_errno): $curl_error"; // set error message
         fileLog($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorAPI_WF.log"); // escribir en el log
+        fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
         respuestaScript($text, 'Error');
         exit; // salimos del script
     }
     curl_close($ch); // close curl handle
-    return ($data_content) ? $data_content : fileLog("No hay datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log"); // si no hay datos, escribir en el log
+    return ($data_content) ? $data_content : fileLog("No hay datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log").fileLog("No hay datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
     exit;
 }
-function tipoEjecucion()  // Función para saber desde donde se ejuca el script
+function tipoEjecucion()  // Función para saber desde donde se ejecta el script
 {
     /** para que se cumplan estas condiciones hay que indicar el parametro get para cada ejecución, siempre que se ejecute desde un servidor web.
      * los argumentos que se pueden pasar son:
@@ -365,6 +368,7 @@ function pingWebService($url) // Funcion para validar que el Webservice de Contr
     if ($curl_errno > 0) { // si hay error
         $text = "Error Ping WebService. \"Cod: $curl_errno: $curl_error\""; // set error message
         fileLog($text, __DIR__ . '/logs/errores/' . date('Ymd') . '_errorWebService.log'); // escribir en el log
+        fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
         respuestaScript($text, 'Error'); // retornar error
         exit; // salimos del script
     }
@@ -372,7 +376,7 @@ function pingWebService($url) // Funcion para validar que el Webservice de Contr
     curl_close($ch); // close curl handle
     //return curl_getinfo($ch, CURLINFO_HTTP_CODE); // retornar el codigo de respuesta
     $textoErr = "Error -> No hay conexion con WebService: " . $http_code;
-    return ($http_code == 201) ? true : fileLog($textoErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log") . respuestaScript($textoErr, 'Error'); // escribir en el log
+    return ($http_code == 201) ? true : fileLog($textoErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log") . respuestaScript($textoErr, 'Error').fileLog($textoErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');; // escribir en el log
 }
 function respuestaWebService($respuesta) // Funcion para formatear la respuesta del Webservice de Control Horario
 {
@@ -407,6 +411,7 @@ function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $
     if ($curl_errno > 0) { // si hay error
         $text = "cURL Error ($curl_errno): $curl_error"; // set error message
         fileLog($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
+        fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
         respuestaScript($text, 'Error'); // retornar error
         exit; // salimos del script
     }
@@ -424,11 +429,13 @@ function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $
             return true; // retornar true
         } else {
             fileLog("#" . $hashtag . " Error al ingresar Novedades WebService. Estado: " . $estado, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
+            fileLog("#" . $hashtag . " Error al ingresar Novedades WebService. Estado: " . $estado, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
         }
         exit; // salimos del script
     } else { // si el codigo de respuesta no es 201
         $textErr = "#" . $hashtag . " Error al ingresar Novedad (" . $Novedad . ") Legajo :" . $LegajoDesde . " Fechas: " . $FechaDesde . " al " . $FechaDesde . " - " . $respuesta; // set error message
         fileLog($textErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
+        fileLog($textErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
         //respuestaScript($textErr, 'Error'); // retornar error
     }
 }
@@ -454,6 +461,7 @@ function procesarNovedad($legajo, $FechaDesde, $FechaHasta, $url) // Funcion par
     if ($http_code == 404) { // si el codigo de respuesta es 404 Not Found
         $textErr = "#" . $hashtag . " Error al conectar con Procesar WebService: " . $http_code . ' Not Found ';
         fileLog($textErr . $respuesta, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
+        fileLog($textErr . $respuesta, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
         respuestaScript($textErr . $respuesta, 'Error'); // retornar error
     };
     curl_close($ch);  // cerrar curl
@@ -466,12 +474,14 @@ function procesarNovedad($legajo, $FechaDesde, $FechaHasta, $url) // Funcion par
             return true; // retornar true
         } else {
             fileLog("#" . $hashtag . " Error al procesar Novedad con WebService. Estado: " . $estado, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
+            fileLog("#" . $hashtag . " Error al procesar Novedad con WebService. Estado: " . $estado, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
         }
         exit;
         // salimos del script
     } else { // si el codigo de respuesta no es 201
         $textErr = "#" . $hashtag . " Error al procesar Novedad Legajo :" . $legajo . " Fechas: " . $FechaDesde . " al " . $FechaDesde . " - " . $respuesta;
         fileLog($textErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
+        fileLog($textErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
         respuestaScript($textErr . $respuesta, 'Error'); // retornar error
     }
 }
@@ -526,6 +536,7 @@ function audito_ch($AudTipo, $AudDato, $link) // Funcion para auditar el control
                 $dataAud = array("auditor" => "error", "dato" => $mensaje[3]);
             }
             fileLog('Error Audito: ' . $error['message'], __DIR__ . "/logs/errores/" . date('Ymd') . "_errorAuditor.log"); // escribir en el log
+            fileLog('Error Audito: ' . $error['message'], __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
             respuestaScript('Error Audito: ' . $error['message'], 'Error'); // retornar error
         }
     }
@@ -568,7 +579,6 @@ function dateDifference($date_1, $date_2, $differenceFormat = '%a') // diferenci
     $datetime2 = date_create($date_2); // creo la fecha 2
 
     $interval = date_diff($datetime1, $datetime2); // obtengo la diferencia de fechas
-
     return $interval->format($differenceFormat); // devuelvo el número de días
 
 }
@@ -586,6 +596,7 @@ function borrarLogs($path, $dias, $ext) // borra los logs a partir de una cantid
             if ($dateDiff >= $dias) :
                 unlink($file); // borramos el fichero
                 fileLogs("Se elimino log \"$file\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
+                fileLog("Se elimino log \"$file\"", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
             endif; //elimino el fichero
         }
     }

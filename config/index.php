@@ -308,9 +308,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
             </div> <!-- /Fila -->
             <button type="submit" class="btn btn-primary" name="submit" id="submit">Guardar</button> <!-- Botón -->
             <button type="button" class="btn btn-success" name="script" id="script">Ejecutar Script</button> <!-- Botón -->
+            <button class="btn btn-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLogs" aria-controls="offcanvasLogs" id="verLogs" hidden>
+                Log
+            </button>
             <span class="float-end mt-4 pb-2" style="font-size:12px">(*) Requeridos</span> <!-- Requeridos -->
             <span id="spanRespuesta" class="ms-2"> </span> <!-- Mensaje -->
         </form> <!-- Fin Formulario -->
+        <div class="offcanvas offcanvas-top h-100" tabindex="-1" id="offcanvasLogs" aria-labelledby="offcanvasLogsLabel" style="background-color: #2D333B;color: #ADB6BA">
+            <!-- Inicio Offcanvas -->
+            <div class="offcanvas-header">
+                <!-- Inicio Offcanvas Header -->
+                <h5 class="offcanvas-title" id="offcanvasLogsLabel">Log</h5> <!-- Título -->
+                <button type="button" class="bg-white btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button> <!-- Botón Cerrar -->
+            </div> <!-- Fin Offcanvas Header -->
+            <div class="offcanvas-body">
+                <!-- Inicio Offcanvas Body -->
+                <pre id="contentCanva"></pre> <!-- Contenido -->
+            </div>
+        </div>
     </div> <!-- Fin Contenedor -->
     <script src="..\asset\jquery-3.6.0.min.js"></script> <!-- Jquery -->
     <script src="..\asset\bootstrap.min.js"></script> <!-- Bootstrap -->
