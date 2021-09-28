@@ -610,28 +610,31 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
     $logNovedadesEr = $dataJson['logNovedades']['error'];
     $logConnOk      = $dataJson['logConexion']['success'];
     $logConnErr     = $dataJson['logConexion']['error'];
-    $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
     $date     = date('d-m-Y H:i:s'); // obtenemos la fecha actual
     $textJson = $text; // obtenemos el texto a escribir
     $text     = $date . ' ' . $text . tipoEjecucion() . "\n"; // armamos el texto a escribir
     switch ($tipo): // según el tipo de log
         case 'novOk': // si es un log de novedades exitosa
             if ($logNovedadesOk) : // si está activado el log de novedades exitosa
+                $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
             endif;
             break;
         case 'novErr': // si es un log de novedades fallida
             if ($logNovedadesEr) : // si está activado el log de novedades fallida
+                $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
             endif;
             break;
         case 'conOk': // si es un log de conexión exitosa
             if ($logConnOk) : // si está activado el log de conexión exitosa
+                $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
             endif;
             break;
         case 'conErr': // si es un log de conexión fallida
             if ($logConnErr) : // si está activado el log de conexión fallida
+                $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
             endif;
             break;
@@ -641,6 +644,7 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
             fwrite($log, $textJson); // escribimos en el archivo
             break;
         default:
+            $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
             fwrite($log, $text); // escribimos en el archivo
             break;
             fclose($log); // cerramos el archivo

@@ -64,3 +64,26 @@ input {
 .alert {
     border-radius: 0px !important;
 }
+::-webkit-scrollbar {
+    width: 5px !important;
+    height: 5px !important;
+    cursor: pointer !important;
+}
+
+/* Track */
+
+::-webkit-scrollbar-track {
+    background: #ADB6BA;
+}
+
+/* Handle */
+
+::-webkit-scrollbar-thumb {
+    background: #ADB6BA;
+}
+
+/* Handle on hover */
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ADB6BA;
+}

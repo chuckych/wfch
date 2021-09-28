@@ -67,7 +67,7 @@ $(function () { // DOM ready
                 setTimeout(function () { // Timeout
                     $('#spanRespuesta').html('') // Clear response
                 }, 6000); // 6 seconds
-                getLog(urlLogs); // Get logs
+                getLog(urlLogs+'?v=' + Date.now()); // Get logs
             } // End error
         }); // End ajax
     }); // End submit form
@@ -75,6 +75,7 @@ $(function () { // DOM ready
     getConfig(urlConfig); // Get config.json
 
     $('#script').click(function (e) { // Ejecutar Script
+        let intervalLogs = null // Interval logs
         e.preventDefault(); // Prevent default
         $.ajax({  // Ajax 
             type: 'GET', // Method
@@ -84,26 +85,31 @@ $(function () { // DOM ready
                 $("#script").prop("disabled", true); // Disable button
                 $("#script").html("Ejecutando ......"); // Change button text   
                 $('#spanRespuesta').html('Ejecutando script...') // Set response
+                intervalLogs = setInterval(function () { // Set interval logs
+                    getLog(urlLogs+'?v=' + Date.now()); // Get logs 
+                }, 1000); // 1 second 
             },
             success: function (data) { // Success 
+                clearInterval(intervalLogs) // Clear interval logs
                 if (data.status == "ok") {
                     $("#script").prop("disabled", false);
                     $("#script").html("Ejecutar Script");
-                    getLog(urlLogs); // Get logs
+                    getLog(urlLogs+'?v=' + Date.now()); // Get logs
                     $('#spanRespuesta').html('')
                     $('#spanRespuesta').html('<b>' + data.Mensaje + '</b>')
                 } else {
                     $("#script").prop("disabled", false);
                     $("#script").html("Ejecutar Script");
-                    getLog(urlLogs); // Get logs
+                    getLog(urlLogs+'?v=' + Date.now()); // Get logs
                     $('#spanRespuesta').html('')
                     $('#spanRespuesta').html('<span class="text-danger"><b>' + data.Mensaje + '</b></span>')
                 }
             },
             error: function () { // Error
+                clearInterval(intervalLogs) // Clear interval logs
                 $("#script").prop("disabled", false);
                 $("#script").html("Ejecutar Script");
-                getLog(urlLogs); // Get logs
+                getLog(urlLogs+'?v=' + Date.now()); // Get logs
                 $('#spanRespuesta').html('')
                 $('#spanRespuesta').html('<span class="text-danger"><b>Error</b></span>')
             } // End error
@@ -121,7 +127,7 @@ $(function () { // DOM ready
                     $('.refreshLog').click(function () { // Actualizar Log
                         document.getElementById("contentCanva").innerHTML = ''; // Clear response
                         setTimeout(function () { // Timeout
-                            getLog(urlLogs); // Get logs
+                            getLog(urlLogs+'?v=' + Date.now()); // Get logs
                         }, 100); // 1 second
                     }); // End refresh log
                 } else {
@@ -134,7 +140,7 @@ $(function () { // DOM ready
                 $('.refreshLog').click(function () { // Actualizar Log
                     document.getElementById("contentCanva").innerHTML = ''; // Clear response
                     setTimeout(function () { // Timeout
-                        getLog(urlLogs); // Get logs
+                        getLog(urlLogs+'?v=' + Date.now()); // Get logs
                     }, 100); // 1 second
                 }); // End refresh log
             }); // End fetch
@@ -154,10 +160,10 @@ $(function () { // DOM ready
         return [year, month, day].join('');
     }
 
-    getLog(urlLogs); // Get log
+    getLog(urlLogs+'?v=' + Date.now()); // Get logs
 
     let offcanvasLogs = document.getElementById('offcanvasLogs') // Offcanvas
     offcanvasLogs.addEventListener('shown.bs.offcanvas', function () { // Offcanvas shown
-        getLog(urlLogs)
+        getLog(urlLogs+'?v=' + Date.now()); // Get logs
     }) // End offcanvas shown
 }); // End ready
