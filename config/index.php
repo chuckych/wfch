@@ -103,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="..\asset\bootstrap.min.css"> <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="..\asset\style-min.css?v=<?= time() ?>"> <!-- Estilo CSS -->
-
+    <link rel="icon" type="image/png" sizes="32x32" href="..\asset\favicon-32x32.png"> <!-- Favicon -->
     <title>Config WF-CH!</title> <!-- Título -->
 </head>
 

@@ -2,11 +2,12 @@
 <html lang="es">
 
 <head>
-    <title>Listar Archivos</title>
+    <title>Logs WFCH</title>
     <meta charset="UTF-8">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="..\asset\bootstrap.min.css"> <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="..\asset\style.css?v=<?= time() ?>"> <!-- Estilo CSS -->
+    <link rel="icon" type="image/png" sizes="32x32" href="..\asset\favicon-32x32.png"> <!-- Favicon -->
     <style>
         .btn-link:hover {
             color: #fff !important;
