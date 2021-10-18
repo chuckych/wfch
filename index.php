@@ -1,4 +1,5 @@
 <?php
+
 /** Autor: Norberto CH: nchaquer@gmail.com */
 ini_set('max_execution_time', 900); // 15 minutos de tiempo maximo de ejecución
 header("Content-Type: application/json; charset=utf-8"); // json response
@@ -15,7 +16,7 @@ $_GET['html']       = $_GET['html'] ?? "";
 require __DIR__ . '/func.php'; // Funciones
 require __DIR__ . '/conn.php'; // Conexion bd
 
-if($_SERVER["argv"][1] != 'tarea' && $_SERVER["argv"][1] != 'echo' && $_GET['script'] != true && $_GET['html'] != true){
+if ($_SERVER["argv"][1] != 'tarea' && $_SERVER["argv"][1] != 'echo' && $_GET['script'] != true && $_GET['html'] != true) {
     $textArg = "Error al ejecutar el script. No se establecio un argumento o parametro valido";
     echo $textArg;
     fileLogs($textArg, __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
@@ -130,6 +131,7 @@ require __DIR__ . '/personal.php'; // Personal
 /** */
 
 /** Recorrer los datos de la API WF  */
+fileLogs("Inicio de Ingreso de Novedades:", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
 foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para crear un objeto con los datos de la API
     $dataApi = array( // Creo un array con los datos de la API
         'id_out'         => $value->id_out, // ID del registro de la API
@@ -188,11 +190,21 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
         $textLog .= (empty($value->legajo)) ? ', Legajo vacio.' : '';    // Si el legajo esta vacio
         $textLog .= (!esHora($horasNov)) ? ', Formato de horas erroneo.' : ''; // Si la hora no tiene un formato valido de 00:00
         $textLog .= (fechaFormat($value->fecha_desde, 'Ymd') > fechaFormat($value->fecha_hasta, 'Ymd')) ? ", La fecha desde: " . $dataApi['fecha_desde'] . " es mayor que la fecha hasta " . $dataApi['fecha_hasta'] : ""; // Si la fecha desde es mayor a la fecha hasta, Si no, no hacemos nada
-        $textLog .= "\n"; // Salto de linea
+        //$textLog .= "\n"; // Salto de linea
     endif;
 }
 if (!empty($textLog) && $textLog != "\n") {
     fileLogs($textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); // Si hay texto de error lo guardamos en el archivo de log
+    fileLogs($textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
+
+    $jsonData = array(
+        "legajo" => "$value->legajo", "fecha" => "$dataApi[fecha_desdeStr]", "novedad" => "$value->novedad", "status" => "N", "id_out" => "$value->id_out", "motivo" => urlencode($textLog)
+    ); // Creamos el array con los datos de la novedad para enviar a la API
+    $jsonData      = json_encode($jsonData); // Convertimos el array en JSON
+    $sendApiData   = sendApiData($dataJson['api']['url'] . '?TYPE=respuesta&data=[' . $jsonData . ']', $auth, $proxy, 10, ''); // Enviamos el objeto JSON a la API
+    $respuesta     = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
+    $textRespuesta = ($respuesta->SUCCESS == 'YES') ? "Registros actualizados correctamente en WF. Dur $durSendApi" :  $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
+    fileLogs($textRespuesta, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
 };
 /** */
 
@@ -201,7 +213,6 @@ $diasPresentes = array(); // Array de dias presentes
 $item = 0; // Contador de items
 // Contador de items
 /** Iniciamos el ingreso de novedades al Web Service */
-fileLogs("Inicio de Ingreso de Novedades:", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
 foreach ($data as $key => $value) { // Recorremos el array con los datos del objeto creado de la API WF para ingresar las novedades en CH
     $textNov = ''; // Texto de la novedad
 

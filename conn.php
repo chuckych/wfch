@@ -82,7 +82,7 @@ if (file_exists($rutaConfig)) : // Si existe archivo de configuraciones
         $DriverVer      = sqlsrv_client_info($link)['DriverVer'] ?? ''; // Version del driver
         $DriverODBCVer  = sqlsrv_client_info($link)['DriverODBCVer'] ?? ''; // Version del driver ODBC
         $DriverDllName  = sqlsrv_client_info($link)['DriverDllName'] ?? ''; // Nombre del driver
-        $text           = "\nConexión exitosa a la base de datos \"$dataBase\"\nVersion del motor SQL: \"$version\"\nNombre del servidor: \"$serverName\"\nVersion de la extensión: \"$ExtensionVer\"\nVersion del driver: \"$DriverVer\"\nVersion del driver ODBC: \"$DriverODBCVer\"\nNombre del driver: \"$DriverDllName\"\n";
+        $text           = "\nConexión exitosa a la base de datos \"$dataBase\"\nVersion del motor SQL: \"$version\"\nNombre del servidor: \"$serverName\"\nVersion de la extensión: \"$ExtensionVer\"\nVersion del driver: \"$DriverVer\"\nVersion del driver ODBC: \"$DriverODBCVer\"\nNombre del driver: \"$DriverDllName";
         fileLogs($text, __DIR__ . "/logs/conn/" . date('Ymd') . "_successConexion.log", 'conOk'); // guarda el log de exito en el archivo
     endif;
 else :
