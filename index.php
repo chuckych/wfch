@@ -67,7 +67,7 @@ $ping = PingWebService($urlWebService . 'Ping?'); // ping al webservice
 $data      = array(); // Array para almacenar los datos
 $FechaHora = date('Ymd H:i:s'); // Fecha y hora actual
 $textLog   = ''; // Texto para el log
-$textLog  .= "\n";
+// $textLog  .= "\n";
 
 /** Obtener Novedades de CH */
 require __DIR__ . '/novedades.php';  // Novedades
@@ -196,14 +196,13 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
 if (!empty($textLog)) {
     fileLogs($textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); // Si hay texto de error lo guardamos en el archivo de log
     fileLogs($textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
-
     $jsonData = array(
         "legajo" => "$value->legajo", "fecha" => "$dataApi[fecha_desdeStr]", "novedad" => "$value->novedad", "status" => "N", "id_out" => "$value->id_out", "motivo" => urlencode($textLog)
     ); // Creamos el array con los datos de la novedad para enviar a la API
     $jsonData      = json_encode($jsonData); // Convertimos el array en JSON
     $sendApiData   = sendApiData($dataJson['api']['url'] . '?TYPE=respuesta&data=[' . $jsonData . ']', $auth, $proxy, 10, ''); // Enviamos el objeto JSON a la API
     $respuesta     = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
-    $textRespuesta = ($respuesta->SUCCESS == 'YES') ? "Registros actualizados correctamente en WF. Dur $durSendApi" :  $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
+    $textRespuesta = ($respuesta->SUCCESS == 'YES') ? "Registro $value->id_out actualizado correctamente en WF. Dur $durSendApi" :  $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
     fileLogs($textRespuesta, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
 };
 /** */
