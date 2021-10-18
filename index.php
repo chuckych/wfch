@@ -193,7 +193,7 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
         //$textLog .= "\n"; // Salto de linea
     endif;
 }
-if (!empty($textLog) && $textLog != "\n") {
+if (!empty($textLog)) {
     fileLogs($textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); // Si hay texto de error lo guardamos en el archivo de log
     fileLogs($textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
 
