@@ -182,7 +182,7 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
         ),
          */
     else : // Si no cumplen alguna condicion
-        $textLog .= 'Error -> Novedad: ' . $novCodi . '. Legajo: ' . $value->legajo . '. Fechas: ' . fechaFormat($value->fecha_desde, 'd/m/Y') . ' al ' . fechaFormat($value->fecha_hasta, 'd/m/Y') . '. Horas: ' . $horasNov . '. ID Registro WF: ' . $value->id_out . '.'; // Texto de Error
+        $textLog .= 'Nov: ' . $novCodi . '. Leg: ' . $value->legajo . '. ' . fechaFormat($value->fecha_desde, 'd/m/Y') . ' - ' . fechaFormat($value->fecha_hasta, 'd/m/Y') . ' ID_OUT: ' . $value->id_out . '.'; // Texto de Error
         $textLog .=  ($filtrarLegajo) ? '' : ' Legajo no existe en CH.'; // Si el legajo no existe en CH
         $textLog .=  ($filtroNovedad) ? '' : ' Novedad no existe en CH.'; // Si la novedad no existe en CH
         $textLog .= (empty($value->fecha_desde)) ? ', Fecha desde vacia.' : ''; // Si la fecha desde esta vacia
@@ -194,15 +194,21 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
     endif;
 }
 if (!empty($textLog)) {
-    fileLogs($textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); // Si hay texto de error lo guardamos en el archivo de log
-    fileLogs($textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
+    fileLogs('Error -> '.$textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); // Si hay texto de error lo guardamos en el archivo de log
+    fileLogs('Error -> '.$textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
     $jsonData = array(
         "legajo" => "$value->legajo", "fecha" => "$dataApi[fecha_desdeStr]", "novedad" => "$value->novedad", "status" => "N", "id_out" => "$value->id_out", "motivo" => urlencode($textLog)
     ); // Creamos el array con los datos de la novedad para enviar a la API
     $jsonData      = json_encode($jsonData); // Convertimos el array en JSON
     $sendApiData   = sendApiData($dataJson['api']['url'] . '?TYPE=respuesta&data=[' . $jsonData . ']', $auth, $proxy, 10, ''); // Enviamos el objeto JSON a la API
     $respuesta     = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
-    $textRespuesta = ($respuesta->SUCCESS == 'YES') ? "Registro $value->id_out actualizado correctamente en WF. Dur $durSendApi" :  $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
+    $textRespuesta = ($respuesta->SUCCESS == 'YES') ? "Registro $value->id_out actualizado correctamente en WF con status N" :  $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
+    fileLogs($textRespuesta, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+
+    $jsonData = json_encode(array("status" => "E", "id_out" => "$value->id_out")); // Creamos el objeto json para enviarlo al Api
+    $sendApiData = sendApiData($dataJson['api']['url'] . "?TYPE=update&data=[$jsonData]", $auth, $proxy, 5, ''); // Enviamos el objeto JSON a la API notificando que se termino de procesar la novedad con status 'E' 
+    $respuesta   = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
+    $textRespuesta = ($respuesta->SUCCESS == 'YES') ? "Registro actualizado correctamente en WF con status E" :  $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
     fileLogs($textRespuesta, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
 };
 /** */

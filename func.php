@@ -190,8 +190,9 @@ function pingApi($url, $auth, $proxy, $timeout = 5) // Función para verificar l
     return ($data_content) ? $data_content : fileLog("Error Ping API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log") . respuestaScript('Error Ping API WF', 'Error').fileLog('Error Ping API WF', __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
     exit;
 }
-function sendApiData($url, $auth, $proxy, $timeout = 10, $data) // Enviar datos a la API
+function sendApiData($url, $auth, $proxy, $timeout, $data) // Enviar datos a la API
 {
+    $timeout = $timeout ?? 10;
     $proxyIP     = $proxy[0]; // IP del proxy
     $proxyPort   = $proxy[1]; // Puerto del proxy
     $proxyEnable = $proxy[2]; // Habilitado o no
