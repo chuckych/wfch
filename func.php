@@ -31,6 +31,38 @@ function dataNovedades($link) // Obtiene los datos de las novedades de la base d
     sqlsrv_free_stmt($stmt);
     // sqlsrv_close($link);
 }
+function perCierreFech($FechaStr, $Legajo, $link)
+{
+    $params    = array();
+    $options   = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
+    $query = "SELECT TOP 1 CierreFech FROM PERCIERRE WHERE PERCIERRE.CierreLega = '$Legajo'";
+    $stmt  = sqlsrv_query($link, $query, $params, $options);
+    // print_r($query); exit;
+    while ($row = sqlsrv_fetch_array($stmt)) {
+        $perCierre = $row['CierreFech']->format('Ymd');
+    }
+    $perCierre = !empty($perCierre) ? $perCierre : '17530101';
+    sqlsrv_free_stmt($stmt);
+
+    if ($FechaStr <= $perCierre) {
+        return $perCierre;
+    } else {
+        $query = "SELECT ParCierr FROM PARACONT WHERE ParCodi = 0 ORDER BY ParCodi";
+        // print_r($query); exit;
+        $stmt  = sqlsrv_query($link, $query, $params, $options);
+        while ($row = sqlsrv_fetch_array($stmt)) {
+            $ParCierr = $row['ParCierr']->format('Ymd');
+        }
+        $ParCierr = !empty($ParCierr) ? $ParCierr : '17530101';
+        sqlsrv_free_stmt($stmt);
+        if ($FechaStr <= $ParCierr) {
+            return $ParCierr;
+        } else {
+            return false;
+        }
+    }
+    sqlsrv_close($link);
+}
 function lastUpdateTabla($link, $tabla) // Obtiene la ultima fecha de actualizacion de una tabla
 {
     $stmt  = sqlsrv_query($link, "SELECT MAX($tabla.FechaHora) as 'maxFecha' FROM $tabla"); // Ejecutamos la consulta
@@ -55,6 +87,27 @@ function dataLegajos($link) // Obtiene los legajos de la base de datos CH
     return $data;
     sqlsrv_free_stmt($stmt);
     // sqlsrv_close($link);
+}
+function eliminarNovedad($FicLega, $FicFech, $FicNove, $link) // Obtiene los legajos de la base de datos CH
+{
+    $params  = array();
+    $options = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
+    // require __DIR__ . '/conn.php';
+    $query = "DELETE FROM FICHAS3 WHERE FICHAS3.FicLega = '$FicLega' AND FICHAS3.FicFech = '$FicFech' AND FICHAS3.FicNove = '$FicNove'";
+    $stmt  = sqlsrv_query($link, $query, $params, $options);
+    if (($stmt)) {
+        return true;
+    } else {
+        if (($errors = sqlsrv_errors()) != null) {
+            foreach ($errors as $error) {
+                $mensaje = explode(']', $error['message']);
+                $data[] = $mensaje[3];
+            }
+        }
+        fileLogs('Error al Eliminar Novedad '. $data[0], __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); 
+        fileLogs('Error al Eliminar Novedad '. $data[0], __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); 
+        exit;
+    }
 }
 function filtrarObjeto($array, $key, $valor) // Funcion para filtrar un objeto
 {
@@ -152,7 +205,7 @@ function apiData($url, $auth, $proxy, $timeout = 10) // Función para obtener da
         exit; // salimos del script
     }
     curl_close($ch); // close curl handle
-    return ($data_content) ? $data_content : fileLog("No datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log").fileLog("No datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // si no hay datos, escribir en el log
+    return ($data_content) ? $data_content : fileLog("No datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log") . fileLog("No datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // si no hay datos, escribir en el log
     exit;
 }
 function pingApi($url, $auth, $proxy, $timeout = 5) // Función para verificar la conexión a la API
@@ -187,7 +240,7 @@ function pingApi($url, $auth, $proxy, $timeout = 5) // Función para verificar l
         exit; // salimos del script
     }
     curl_close($ch); // close curl handle
-    return ($data_content) ? $data_content : fileLog("Error Ping API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log") . respuestaScript('Error Ping API WF', 'Error').fileLog('Error Ping API WF', __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
+    return ($data_content) ? $data_content : fileLog("Error Ping API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log") . respuestaScript('Error Ping API WF', 'Error') . fileLog('Error Ping API WF', __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
     exit;
 }
 function sendApiData($url, $auth, $proxy, $timeout, $data) // Enviar datos a la API
@@ -224,7 +277,7 @@ function sendApiData($url, $auth, $proxy, $timeout, $data) // Enviar datos a la 
         exit; // salimos del script
     }
     curl_close($ch); // close curl handle
-    return ($data_content) ? $data_content : fileLog("No hay datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log").fileLog("No hay datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
+    return ($data_content) ? $data_content : fileLog("No hay datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log") . fileLog("No hay datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
     exit;
 }
 function tipoEjecucion()  // Función para saber desde donde se ejecta el script
@@ -245,11 +298,11 @@ function tipoEjecucion()  // Función para saber desde donde se ejecta el script
     switch ($tipoArgv) { // Si se indica el parametro argv
         case 'tarea': // Si se indica el parametro tarea
             $tipoEjecucion = ' (T)'; // Se asigna el tipo de ejecucion
-            break; 
+            break;
         case 'echo': // Si se indica el parametro echo
             $tipoEjecucion = ' (C)'; // Se asigna el tipo de ejecucion
-            break; 
-    }   
+            break;
+    }
 
     switch ($_SERVER["REQUEST_METHOD"]) { // obtener el metodo de la peticion
         case ($_GET['script'] == true): // Si se indica el parametro script
@@ -377,7 +430,7 @@ function pingWebService($url) // Funcion para validar que el Webservice de Contr
     curl_close($ch); // close curl handle
     //return curl_getinfo($ch, CURLINFO_HTTP_CODE); // retornar el codigo de respuesta
     $textoErr = "Error -> No hay conexion con WebService: " . $http_code;
-    return ($http_code == 201) ? true : fileLog($textoErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log") . respuestaScript($textoErr, 'Error').fileLog($textoErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');; // escribir en el log
+    return ($http_code == 201) ? true : fileLog($textoErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log") . respuestaScript($textoErr, 'Error') . fileLog($textoErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');; // escribir en el log
 }
 function respuestaWebService($respuesta) // Funcion para formatear la respuesta del Webservice de Control Horario
 {
@@ -497,6 +550,8 @@ function stringAleatorio($longitud) // Funcion para generar un string aleatorio
 }
 function audito_ch($AudTipo, $AudDato, $link) // Funcion para auditar el control horario
 {
+    $_SERVER['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'] ?? '::1';
+
     $ipCliente = $_SERVER['REMOTE_ADDR']; // obtengo la ip del cliente
     switch ($ipCliente) { // verifico la ip del cliente
         case '::1': // si es localhost
@@ -506,12 +561,13 @@ function audito_ch($AudTipo, $AudDato, $link) // Funcion para auditar el control
             $ipCliente = ($_SERVER['REMOTE_ADDR']); // seteo la ip del cliente
             break;
     }
-    // require __DIR__ . '/conn.php'; // conexion a la base de datos
+
+    $ipCliente = substr($ipCliente, 0, 20);
     $AudUser    = 'Script WF'; // usuario que realiza la accion
-    $AudTerm   = $ipCliente . '-' . stringAleatorio(4); // terminal donde se realiza la accion
+    $AudTerm   = $ipCliente;
     $AudModu   = 21; // modulo en el que se realiza la accion
-    $FechaHora = date('Ymd H:i:s'); // obtengo la fecha y hora actual
-    $AudFech   = date('Ymd'); // obtengo la fecha actual como string
+    $FechaHora = fechaHora();
+    $AudFech   = fechaHora();
     $AudHora   = date('H:i:s'); // obtengo la hora actual
 
     $procedure_params = array( // parametros del procedimiento almacenado
@@ -567,12 +623,28 @@ function fechaIniFinDias($fecha_inicial, $fecha_final, $dias) // obtengo objeto 
         $arrayFechas[] = array( // almaceno las fechas en el array
             'fecha_desde' => fechaFormat($fecha1, 'd/m/Y'), // fecha inicial
             'fecha_hasta' => fechaFormat($fecha2, 'd/m/Y'), // fecha final
-            'fecha_hastaStr' => fechaFormat($fecha1, 'Ymd'),
+            'fecha_desdeStr' => fechaFormat($fecha1, 'Ymd'),
             'fecha_hastaStr' => fechaFormat($fecha2, 'Ymd'),
         );
         $fecha_inicial = date("Ymd", strtotime($fecha2 . "+ 1 days")); // fecha inicial
     }
     return $arrayFechas; // retorno el array con las fechas
+}
+function arrayFechas($start, $end)
+{
+    $range = array();
+
+    if (is_string($start) === true) $start = strtotime($start);
+    if (is_string($end) === true) $end = strtotime($end);
+
+    // if ($start > $end) return createDateRangeArray($end, $start);
+
+    do {
+        $range[] = date('Ymd', $start);
+        $start = strtotime("+ 1 day", $start);
+    } while ($start <= $end);
+
+    return $range;
 }
 function dateDifference($date_1, $date_2, $differenceFormat = '%a') // diferencia en días entre dos fechas
 {
@@ -697,4 +769,26 @@ function respuestaScript($mensaje, $status) // genera la respuesta del script cu
         echo "<html style='width:100%; height:100%; background-color: #ddd'><h3><div style='padding:20px;'>$mensaje$tipo</div></h3></html>"; // devuelve la respuesta
         exit(); // Salir
     }
+}
+function fechaHora()
+{
+    timeZone();
+    $t = explode(" ", microtime());
+    $t = date("Ymd H:i:s", $t[1]) . substr((string)$t[0], 1, 4);
+    return $t;
+}
+function fechaHora2()
+{
+    timeZone();
+    $t = date("Y-m-d H:i:s");
+    return $t;
+}
+
+function timeZone()
+{
+    return date_default_timezone_set('America/Argentina/Buenos_Aires');
+}
+function timeZone_lang()
+{
+    return setlocale(LC_TIME, "es_ES");
 }
