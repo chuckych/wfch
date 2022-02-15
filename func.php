@@ -3,7 +3,7 @@ function version() {
     return "1.0.16";
 }
 function defaultConfigData() // default config data
-{ $datos=array('mssql'=>array('srv'=>'', 'db'=>'', 'user'=>'', 'pass'=>''), 'logConexion'=>array('success'=>false, 'error'=>true), 'api'=>array('url'=>"https://hr-process.com/hrctest/api/novedades/", 'user'=>'admin', 'pass'=>'admin'), 'webService'=>array('url'=>"http:/localhost:6400/RRHHWebService/"), 'logNovedades'=>array('success'=>true, 'error'=>true), 'proxy'=>array('ip'=>'', 'port'=>'', 'enabled'=>false), 'borrarLogs'=>array('estado'=>true, 'dias'=>31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
+{ $datos=array('mssql'=>array('srv'=>'', 'db'=>'', 'user'=>'', 'pass'=>''), 'logConexion'=>array('success'=>false, 'error'=>true), 'api'=>array('url'=>"https://hr-process.com/hrctest/api/novedades/", 'user'=>'admin', 'pass'=>'admin'), 'webService'=>array('url'=>"http://localhost:6400/RRHHWebService/"), 'logNovedades'=>array('success'=>true, 'error'=>true), 'proxy'=>array('ip'=>'', 'port'=>'', 'enabled'=>false), 'borrarLogs'=>array('estado'=>true, 'dias'=>31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
 );
     return $datos;
 }
