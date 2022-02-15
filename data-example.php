@@ -4,7 +4,7 @@
 ; ######## ARCHIVO DE CONFIGURACIÓN DEL SCRIPT WF CH ########
 ; ###########################################################
 ; 
-; 
+;  - crear o renombrar este archivo a data.php
 [mssql]
 srv = "."
 db = "Recursos_HRC60"
@@ -18,7 +18,7 @@ url = "https://hr-process.com/hrctest/api/novedades/"
 user = "admin"
 pass = "admin"
 [webService]
-url = "http:/localhost:6400/RRHHWebService/"
+url = "http://localhost:6400/RRHHWebService/"
 [logNovedades]
 success = "1"
 error = "1"
@@ -80,12 +80,6 @@ dias = "1"
 ; [borrarLogs]
 ;  estado = ingresar un 1 = activo. Dejar vacio si esta inactivo. "Al estar inactivo nunca se eliminarán los logs que genera el script"
 ;  dias   = numero con cantidad de días a borrar los logs que genera el script. "Valor minimo 1".
-; < --- >
-; 
-; ## CONFIGURACION PARA INTERRUMPIR SOLICITUD DE WF ANTE EL PRIMER ERROR ENCONTRADO EN CH. TANTO PARA LAS CARGAS COMO PARA LAS ANULACIONES ##
-; [interrumpirSolicitud]
-;  carga     = ingresar un 1 = activo. Dejar vacio si esta inactivo
-;  anulacion = ingresar un 1 = activo. Dejar vacio si esta inactivo
 ; < --- >
 ; 
 ; 
