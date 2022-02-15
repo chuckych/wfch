@@ -1,34 +1,39 @@
 <?php
 require __DIR__ . '../../func.php'; // Funciones
-$datos = defaultConfigData(); // Datos por defecto
-$rutaConfig = __DIR__ . '../../config.json'; // Path to config.json
-$rutaInfo   = __DIR__ . "../../logs/info/" . date('Ymd') . "_informacion.log"; // Path to info log
 
-$datosConfig = getDataJson($rutaConfig); // Obtenemos los datos del config.json
-if ($datosConfig == false) : // Si no hay datos o no existe el archivo
-    $datosConfig = fileLogsJson(json_encode($datos, JSON_PRETTY_PRINT), $rutaConfig, 'json'); // Creamos el archivo config.json
-    fileLog("Se creo el archivo \"config.json\"", $rutaInfo, ''); // Creamos el archivo info.log
+$datos = defaultConfigData(); // Datos por defecto
+
+$pathConfigData = __DIR__ . '../../data.php'; // Path to data.php
+$rutaInfo    = __DIR__ . "../../logs/info/" . date('Ymd') . "_informacion.log"; // Path to info log
+
+$dataConfig = getDataIni($pathConfigData); // Obtenemos los datos del data.php
+
+if ($dataConfig == false) : // Si no hay datos o no existe el archivo
+    $dataConfig = write_ini_file($datos,  $pathConfigData, true); // Creamos el archivo data.php
+    fileLog("Se creo el archivo \"data.php\"", $rutaInfo, ''); // Creamos el archivo info.log
 endif;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submitted
     header('Content-Type: application/json'); // Set the header to return JSON
-    $_POST['api_url']            = ($_POST['api_url']) ?? ''; // API URL
-    $_POST['api_user']           = ($_POST['api_user']) ?? ''; // API USER
-    $_POST['api_pass']           = ($_POST['api_pass']) ?? ''; // API PASS
-    $_POST['mssql_srv']          = ($_POST['mssql_srv']) ?? ''; // MSSQL SERVER
-    $_POST['mssql_db']           = ($_POST['mssql_db']) ?? ''; // MSSQL DATABASE
-    $_POST['mssql_user']         = ($_POST['mssql_user']) ?? ''; // MSSQL USER
-    $_POST['mssql_pass']         = ($_POST['mssql_pass']) ?? ''; // MSSQL PASS
-    $_POST['ws_ip']              = ($_POST['ws_ip']) ?? ''; // WebService IP
-    $_POST['proxy_ip']           = ($_POST['proxy_ip']) ?? ''; // PROXY IP
-    $_POST['proxy_puerto']       = ($_POST['proxy_puerto']) ?? ''; // PROXY PUERTO
-    $_POST['proxy_estado']       = ($_POST['proxy_estado']) ?? ''; // PROXY ESTADO
-    $_POST['logs_conn_error']    = ($_POST['logs_conn_error']) ?? false; // LOGS CONNECTION ERROR
-    $_POST['logs_conn_success']  = ($_POST['logs_conn_success']) ?? false; // LOGS CONNECTION SUCCESS
-    $_POST['logs_nov_error']     = ($_POST['logs_nov_error']) ?? false; // LOGS NOVEDADES Error
-    $_POST['logs_nov_success']   = ($_POST['logs_nov_success']) ?? false; // LOGS NOVEDADES Success
-    $_POST['logs_borrar_estado'] = ($_POST['logs_borrar_estado']) ?? false; // LOGS BORRAR ESTADO
-    $_POST['logs_borrar_dias']   = ($_POST['logs_borrar_dias']) ?? false; // LOGS BORRAR DIAS
+    $_POST['api_url']              = ($_POST['api_url']) ?? ''; // API URL
+    $_POST['api_user']             = ($_POST['api_user']) ?? ''; // API USER
+    $_POST['api_pass']             = ($_POST['api_pass']) ?? ''; // API PASS
+    $_POST['mssql_srv']            = ($_POST['mssql_srv']) ?? ''; // MSSQL SERVER
+    $_POST['mssql_db']             = ($_POST['mssql_db']) ?? ''; // MSSQL DATABASE
+    $_POST['mssql_user']           = ($_POST['mssql_user']) ?? ''; // MSSQL USER
+    $_POST['mssql_pass']           = ($_POST['mssql_pass']) ?? ''; // MSSQL PASS
+    $_POST['ws_ip']                = ($_POST['ws_ip']) ?? ''; // WebService IP
+    $_POST['proxy_ip']             = ($_POST['proxy_ip']) ?? ''; // PROXY IP
+    $_POST['proxy_puerto']         = ($_POST['proxy_puerto']) ?? ''; // PROXY PUERTO
+    $_POST['proxy_estado']         = ($_POST['proxy_estado']) ?? ''; // PROXY ESTADO
+    $_POST['logs_conn_error']      = ($_POST['logs_conn_error']) ?? ''; // LOGS CONNECTION ERROR
+    $_POST['logs_conn_success']    = ($_POST['logs_conn_success']) ?? ''; // LOGS CONNECTION SUCCESS
+    $_POST['logs_nov_error']       = ($_POST['logs_nov_error']) ?? ''; // LOGS NOVEDADES Error
+    $_POST['logs_nov_success']     = ($_POST['logs_nov_success']) ?? ''; // LOGS NOVEDADES Success
+    $_POST['logs_borrar_estado']   = ($_POST['logs_borrar_estado']) ?? ''; // LOGS BORRAR ESTADO
+    $_POST['logs_borrar_dias']     = ($_POST['logs_borrar_dias']) ?? ''; // LOGS BORRAR DIAS
+    $_POST['interrumpirCarga']     = ($_POST['interrumpirCarga']) ?? ''; // INTERRUMPE LA CARGA
+    $_POST['interrumpirAnluacion'] = ($_POST['interrumpirAnluacion']) ?? ''; // INTERRUMPE LA CARGA
 
     if (!$_POST['api_url'] || !$_POST['api_user'] || !$_POST['api_pass'] || !$_POST['mssql_srv'] || !$_POST['mssql_db'] || !$_POST['mssql_user'] || !$_POST['mssql_pass'] || !$_POST['ws_ip']) { // Validaciones
         $data = array('status' => 'Error', 'Mensaje' => 'Complete los campos requeridos'); // Mensaje
@@ -73,17 +78,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
             array(
                 'estado' => ($_POST['logs_borrar_estado'] == 'on') ? true : false,
                 'dias'   => intval($_POST['logs_borrar_dias']),
-            )
+            ),
+            // 'interrumpirSolicitud' =>
+            // array(
+            //     'carga' => ($_POST['interrumpirCarga'] == 'on') ? true : false,
+            //     'anulacion'   => ($_POST['interrumpirAnluacion'] == 'on') ? true : false,
+            // )
         ); // Datos a guardar
-        $rutaConfig = __DIR__ . '../../config.json'; // Ruta del archivo
-        $datosConfig = getDataJson($rutaConfig); // Obtenemos los datos del archivo
-        if ($datosConfig == false) : // Si no hay datos o no existe el archivo
-            $datosConfig = fileLogs(json_encode($datos, JSON_PRETTY_PRINT), $rutaConfig, 'json'); // Guardamos los datos
-            fileLogs("Se creo el archivo \"config.json\"", __DIR__ . "../../logs/info/" . date('Ymd') . "_informacion.log", '');
+
+        $dataConfig = getDataIni($pathConfigData); // Obtenemos los datos del archivo data.php
+
+        if ($dataConfig == false) : // Si no hay datos o no existe el archivo
+            $dataConfig = write_ini_file($datos,  $pathConfigData, true); // Creamos el archivo data.php
+            fileLogs("Se creo el archivo \"data.php\"", __DIR__ . "../../logs/info/" . date('Ymd') . "_informacion.log", '');
         else : // Si ya existe el archivo
-            $datosConfig = fileLogs(json_encode($datos, JSON_PRETTY_PRINT), $rutaConfig, 'json'); // Guardamos los datos
-            fileLogs("Se actualizo el archivo \"config.json\"", __DIR__ . "../../logs/info/" . date('Ymd') . "_informacion.log", '');
+            $dataConfig = write_ini_file($datos,  $pathConfigData, true); // Creamos el archivo data.php
+            fileLogs("Se actualizo el archivo \"data.php\"", __DIR__ . "../../logs/info/" . date('Ymd') . "_informacion.log", '');
         endif;
+
         $data = array('status' => 'ok', 'Mensaje' => 'Datos guardados corectamente.'); // Mensaje
         echo json_encode($data); // Enviar datos de respuesta del formulario
         exit; // Salir
@@ -103,8 +115,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="..\asset\bootstrap.min.css"> <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="..\asset\style-min.css?v=<?= time() ?>"> <!-- Estilo CSS -->
-    <link rel="icon" type="image/png" sizes="32x32" href="..\asset\favicon-32x32.png"> <!-- Favicon -->
-    <title>Config WF-CH!</title> <!-- Título -->
+    <link rel="icon" type="image/svg" sizes="32x32" href="..\asset\gear.svg"> <!-- Favicon -->
+    <title>Config WF - CH. Ver<?=version()?></title> <!-- Título -->
 </head>
 
 <body class="p-3" style="background-color: #66615b;">
@@ -130,7 +142,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control" id="api_url" name="api_url" placeholder="URL API" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control" id="api_url" name="api_url" placeholder="URL API" autocomplete=off> <!-- Campo -->
                         <label for="api_url">url (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
@@ -138,7 +150,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control req" id="api_user" name="api_user" placeholder="Usuario API" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control req" id="api_user" name="api_user" placeholder="Usuario API" autocomplete=off> <!-- Campo -->
                         <label for="api_user">Usuario (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
@@ -146,12 +158,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="password" class="form-control req" id="api_pass" name="api_pass" placeholder="Password API" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="password" class="form-control req" id="api_pass" name="api_pass" placeholder="Password API" autocomplete=off> <!-- Campo -->
                         <label for="api_pass">Password (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
             </div> <!-- /Fila -->
-            <div class="row mb-3">
+            <div class="row mb-1">
                 <!-- Fila -->
                 <div class="col-12">
                     <!-- Columna -->
@@ -161,7 +173,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control req" id="mssql_srv" placeholder="mssql_srvHelp" name="mssql_srv" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control req" id="mssql_srv" placeholder="mssql_srvHelp" name="mssql_srv" autocomplete=off> <!-- Campo -->
                         <label for="mssql_srv">Servidor (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
@@ -169,7 +181,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control req" id="mssql_db" name="mssql_db" placeholder="mssql_dbHelp" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control req" id="mssql_db" name="mssql_db" placeholder="mssql_dbHelp" autocomplete=off> <!-- Campo -->
                         <label for="mssql_db">Base de datos (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
@@ -177,7 +189,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control req" id="mssql_user" name="mssql_user" placeholder="mssql_userHelp" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control req" id="mssql_user" name="mssql_user" placeholder="mssql_userHelp" autocomplete=off> <!-- Campo -->
                         <label for="mssql_user">Usuario (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
@@ -185,12 +197,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="password" class="form-control req" id="mssql_pass" name="mssql_pass" placeholder="mssql_passHelp" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="password" class="form-control req" id="mssql_pass" name="mssql_pass" placeholder="mssql_passHelp" autocomplete=off> <!-- Campo -->
                         <label for="mssql_pass">Password (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
             </div> <!-- /Fila -->
-            <div class="row mb-3">
+            <div class="row mb-1">
                 <!-- Fila -->
                 <div class="col-12">
                     <!-- Columna -->
@@ -200,12 +212,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control req" id="ws_ip" placeholder="ws_ipHelp" name="ws_ip" autocomplete=off placeholder="http://localhost:6400/RRHHWebService/"> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control req" id="ws_ip" placeholder="ws_ipHelp" name="ws_ip" autocomplete=off placeholder="http://localhost:6400/RRHHWebService/"> <!-- Campo -->
                         <label for="ws_ip">url (*)</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
             </div> <!-- /Fila -->
-            <div class="row mb-3">
+            <div class="row mb-1">
                 <!-- Fila -->
                 <div class="col-12">
                     <!-- Columna -->
@@ -215,7 +227,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control" id="proxy_ip" placeholder="proxy_ipHelp" name="proxy_ip" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control" id="proxy_ip" placeholder="proxy_ipHelp" name="proxy_ip" autocomplete=off> <!-- Campo -->
                         <label for="proxy_ip">Ip</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
@@ -223,7 +235,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     <!-- Columna -->
                     <div class="form-floating mb-1">
                         <!-- Grupo -->
-                        <input type="text" class="form-control" id="proxy_puerto" placeholder="proxy_puertoHelp" name="proxy_puerto" autocomplete=off> <!-- Campo -->
+                        <input autocomplete="off" type="text" class="form-control" id="proxy_puerto" placeholder="proxy_puertoHelp" name="proxy_puerto" autocomplete=off> <!-- Campo -->
                         <label for="proxy_puerto">Puerto</label> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
@@ -236,7 +248,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
             </div> <!-- /Fila -->
-            <div class="row mb-3">
+            <div class="row mb-1">
                 <!-- Fila -->
                 <div class="col-sm-6 col-12">
                     <!-- Columna -->
@@ -285,7 +297,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                     </div> <!-- /Fila -->
                 </div> <!-- /Columna -->
             </div> <!-- /Fila -->
-            <div class="row mb-3">
+            <div class="row mb-1 d-none">
+                        <!-- Fila -->
+                        <div class="col-12">
+                            <!-- Columna -->
+                            <p class="form-label">Anular solicitudes completas ante errores.</p> <!-- Título -->
+                        </div> <!-- /Columna -->
+                        <div class="col-12">
+                            <!-- Columna -->
+                            <div class="form-check form-switch mt-2">
+                                <!-- Grupo -->
+                                <input class="form-check-input" type="checkbox" name="interrumpirCarga" id="interrumpirCarga"> <!-- Campo -->
+                                <label class="form-check-label" for="interrumpirCarga">Para Ingresos</label> <!-- Etiqueta -->
+                            </div> <!-- /Grupo -->
+                            <div class="form-check form-switch mt-2">
+                                <!-- Grupo -->
+                                <input class="form-check-input" type="checkbox" name="interrumpirAnluacion" id="interrumpirAnluacion">
+                                <label class="form-check-label" for="interrumpirAnluacion"> Para Anulaciones</label> <!-- Etiqueta -->
+                            </div> <!-- /Grupo -->
+                        </div> <!-- /Columna -->
+                    </div> <!-- /Fila -->
+            <div class="row mb-1">
                 <!-- Fila -->
                 <div class="col-12">
                     <!-- Columna -->
@@ -301,18 +333,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
                             <label class="form-check-label" for="logs_borrar_estado"></label> <!-- Etiqueta -->
                         </div> <!-- /Grupo -->
                         <div class="form-text mt-2">Cada</div> <!-- Etiqueta -->
-                        <input type="number" class="form-control ms-2" id="logs_borrar_dias" aria-describedby="logs_borrar_diasHelp" name="logs_borrar_dias" autocomplete=off min="1" max="365" style="width: 70px;"> <!-- Campo -->
+                        <input autocomplete="off" type="number" class="form-control ms-2" id="logs_borrar_dias" aria-describedby="logs_borrar_diasHelp" name="logs_borrar_dias" autocomplete=off min="1" max="365" style="width: 70px;"> <!-- Campo -->
                         <div id="logs_borrar_diasHelp" class="form-text ms-2 mt-2">Días</div> <!-- Etiqueta -->
                     </div> <!-- /Grupo -->
                 </div> <!-- /Columna -->
             </div> <!-- /Fila -->
-            <button type="submit" class="btn btn-primary" name="submit" id="submit">Guardar</button> <!-- Botón -->
-            <button type="button" class="btn btn-success" name="script" id="script">Ejecutar Script</button> <!-- Botón -->
-            <button class="btn btn-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLogs" aria-controls="offcanvasLogs" id="verLogs" hidden>
-                Log
-            </button>
-            <span class="float-end mt-4 pb-2" style="font-size:12px">(*) Requeridos</span> <!-- Requeridos -->
-            <span id="spanRespuesta" class="ms-2"> </span> <!-- Mensaje -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary" name="submit" id="submit">Guardar</button> <!-- Botón -->
+                    <button type="button" class="btn btn-success" name="script" id="script">Ejecutar Script</button> <!-- Botón -->
+                    <button class="btn btn-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLogs" aria-controls="offcanvasLogs" id="verLogs" hidden>
+                        Log
+                    </button>
+                    <span class="float-end mt-4 pb-2" style="font-size:12px">(*) Requeridos</span> <!-- Requeridos -->
+                    <span id="spanRespuesta" class="ms-2"> </span> <!-- Mensaje -->
+                </div>
+            </div>
         </form> <!-- Fin Formulario -->
         <div class="offcanvas offcanvas-top h-100" tabindex="-1" id="offcanvasLogs" aria-labelledby="offcanvasLogsLabel" style="background-color: #2D333B;color: #ADB6BA">
             <!-- Inicio Offcanvas -->
@@ -329,6 +365,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
     </div> <!-- Fin Contenedor -->
     <script src="..\asset\jquery-3.6.0.min.js"></script> <!-- Jquery -->
     <script src="..\asset\bootstrap.min.js"></script> <!-- Bootstrap -->
+    <script src="..\asset\axios.min.js"></script> <!-- Form -->
     <script src="..\asset\form-min.js?v=<?= time() ?>"></script> <!-- Form -->
 </body> <!-- Fin Body -->
 

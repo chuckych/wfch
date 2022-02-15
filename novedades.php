@@ -1,5 +1,4 @@
 <?php
-
 /** LAST UPDATE DE NOVEDADES */
 $fechaHoraNovedades = getDataJson(__DIR__ . '\logs\data\fechaHoraNovedades.json'); // Obtenemos la max fecha y hora de las novedades
 if ($fechaHoraNovedades == false) : // Si no hay fecha y hora o no existe el archivo

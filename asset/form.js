@@ -1,31 +1,40 @@
 $(function () { // DOM ready
     'use strict' // Enable ECMAScript "strict"
-    let urlConfig = '../config.json?v=' + Date.now(); // URL to config.json
-    function getConfig(url) { // Get config.json
-        fetch(url) // Fetch config.json
-            .then(response => response.json()) // Parse JSON
-            .then(data => { // When done
-                $('#api_url').val(data['api']['url']); // Set API URL
-                $('#api_pass').val(data['api']['pass']); // Set API Password
-                $('#api_user').val(data['api']['user']); // Set API Username
-                $('#mssql_srv').val(data['mssql']['srv']); // Set MSSQL Server
-                $('#mssql_db').val(data['mssql']['db']); // Set MSSQL Database
-                $('#mssql_user').val(data['mssql']['user']); // Set MSSQL Username
-                $('#mssql_pass').val(data['mssql']['pass']); // Set MSSQL Password 
-                $('#logs_borrar_dias').val(data['borrarLogs']['dias']); // Set Logs Delete Days
-                $('#ws_ip').val(data['webService']['url']); // Set Web Service URL
-                $('#proxy_puerto').val(data['proxy']['port']); // Set Proxy Port
-                $('#proxy_ip').val(data['proxy']['ip']); // Set Proxy IP
-                function activeCheckbox(selector, value) { // Checkbox active
-                    (value) ? $(selector).prop('checked', true) : $(selector).prop('checked', false);
-                }
-                activeCheckbox('#logs_conn_success', data['logConexion']['success']);
-                activeCheckbox('#logs_conn_error', data['logConexion']['error']);
-                activeCheckbox('#logs_nov_error', data['logNovedades']['error']);
-                activeCheckbox('#logs_nov_success', data['logNovedades']['success']);
-                activeCheckbox('#logs_borrar_estado', data['borrarLogs']['estado']);
-                activeCheckbox('#proxy_estado', data['proxy']['enabled']);
-            });
+    let urlConfig = '../config.php?v=' + Date.now(); // URL to data.php
+    function getConfig(url, tk) { // Get config.php
+        let data = new FormData();
+        data.append("tk", tk);
+        axios({
+            method: 'POST',
+            url: url,
+            data: data
+        }).then(function (response) {
+            let data = response.data;
+            $('#api_url').val(data['api']['url']); // Set API URL
+            $('#api_pass').val(data['api']['pass']); // Set API Password
+            $('#api_user').val(data['api']['user']); // Set API Username
+            $('#mssql_srv').val(data['mssql']['srv']); // Set MSSQL Server
+            $('#mssql_db').val(data['mssql']['db']); // Set MSSQL Database
+            $('#mssql_user').val(data['mssql']['user']); // Set MSSQL Username
+            $('#mssql_pass').val(data['mssql']['pass']); // Set MSSQL Password 
+            $('#logs_borrar_dias').val(data['borrarLogs']['dias']); // Set Logs Delete Days
+            $('#ws_ip').val(data['webService']['url']); // Set Web Service URL
+            $('#proxy_puerto').val(data['proxy']['port']); // Set Proxy Port
+            $('#proxy_ip').val(data['proxy']['ip']); // Set Proxy IP
+            function activeCheckbox(selector, value) { // Checkbox active
+                (value) ? $(selector).prop('checked', true) : $(selector).prop('checked', false);
+            }
+            activeCheckbox('#logs_conn_success', data['logConexion']['success']);
+            activeCheckbox('#logs_conn_error', data['logConexion']['error']);
+            activeCheckbox('#logs_nov_error', data['logNovedades']['error']);
+            activeCheckbox('#logs_nov_success', data['logNovedades']['success']);
+            // activeCheckbox('#interrumpirCarga', data['interrumpirSolicitud']['carga']);
+            // activeCheckbox('#interrumpirAnluacion', data['interrumpirSolicitud']['anulacion']);
+            activeCheckbox('#logs_borrar_estado', data['borrarLogs']['estado']);
+            activeCheckbox('#proxy_estado', data['proxy']['enabled']);
+        }).catch(function (error) {
+            alert(url + '\n' + error)
+        })
     }
 
     let fecha = new Date(); // Fecha actual
@@ -67,53 +76,55 @@ $(function () { // DOM ready
                 setTimeout(function () { // Timeout
                     $('#spanRespuesta').html('') // Clear response
                 }, 6000); // 6 seconds
-                getLog(urlLogs+'?v=' + Date.now()); // Get logs
+                getLog(urlLogs + '?v=' + Date.now()); // Get logs
             } // End error
         }); // End ajax
     }); // End submit form
 
-    getConfig(urlConfig); // Get config.json
+    getConfig(urlConfig, formatDate(fecha)); // Get config.php
 
     $('#script').click(function (e) { // Ejecutar Script
         let intervalLogs = null // Interval logs
         e.preventDefault(); // Prevent default
-        $.ajax({  // Ajax 
-            type: 'GET', // Method
-            url: "../", // URL
-            data: "script=true", // Data
-            beforeSend: function (data) { // Before send
-                $("#script").prop("disabled", true); // Disable button
-                $("#script").html("Ejecutando ......"); // Change button text   
-                $('#spanRespuesta').html('Ejecutando script...') // Set response
-                intervalLogs = setInterval(function () { // Set interval logs
-                    getLog(urlLogs+'?v=' + Date.now()); // Get logs 
-                }, 1000); // 1 second 
-            },
-            success: function (data) { // Success 
-                clearInterval(intervalLogs) // Clear interval logs
-                if (data.status == "ok") {
-                    $("#script").prop("disabled", false);
-                    $("#script").html("Ejecutar Script");
-                    getLog(urlLogs+'?v=' + Date.now()); // Get logs
-                    $('#spanRespuesta').html('')
-                    $('#spanRespuesta').html('<b>' + data.Mensaje + '</b>')
-                } else {
-                    $("#script").prop("disabled", false);
-                    $("#script").html("Ejecutar Script");
-                    getLog(urlLogs+'?v=' + Date.now()); // Get logs
-                    $('#spanRespuesta').html('')
-                    $('#spanRespuesta').html('<span class="text-danger"><b>' + data.Mensaje + '</b></span>')
-                }
-            },
-            error: function () { // Error
-                clearInterval(intervalLogs) // Clear interval logs
+
+        $("#script").prop("disabled", true); // Disable button
+        $("#script").html("Ejecutando ......"); // Change button text   
+        $('#spanRespuesta').html('Ejecutando script...') // Set response
+        intervalLogs = setInterval(function () { // Set interval logs
+            getLog(urlLogs + '?v=' + Date.now()); // Get logs 
+        }, 1000); // 1 second 
+
+        axios({
+            method: 'get',
+            url: '../?script=true',
+        }).then(function (response) {
+            clearInterval(intervalLogs) // Clear interval logs
+            let data = response.data;
+            
+            if (data.status == "ok") {
                 $("#script").prop("disabled", false);
                 $("#script").html("Ejecutar Script");
-                getLog(urlLogs+'?v=' + Date.now()); // Get logs
+                getLog(urlLogs + '?v=' + Date.now()); // Get logs
                 $('#spanRespuesta').html('')
-                $('#spanRespuesta').html('<span class="text-danger"><b>Error</b></span>')
-            } // End error
-        }); // End ajax
+                $('#spanRespuesta').html('<b>' + data.Mensaje + '</b>')
+            } else {
+                $("#script").prop("disabled", false);
+                $("#script").html("Ejecutar Script");
+                getLog(urlLogs + '?v=' + Date.now()); // Get logs
+                $('#spanRespuesta').html('')
+                $('#spanRespuesta').html('<span class="text-danger"><b>' + data.Mensaje + '</b></span>')
+            }
+
+        }).catch(function (error) {
+            clearInterval(intervalLogs) // Clear interval logs
+            $("#script").prop("disabled", false);
+            $("#script").html("Ejecutar Script");
+            getLog(urlLogs + '?v=' + Date.now()); // Get logs
+            $('#spanRespuesta').html('')
+            $('#spanRespuesta').html('<span class="text-danger"><b>Error</b></span>')
+            alert(url + '\n' + error)
+        })
+
     }); // End Ejecutar Script
 
     function getLog(url) { // Get Log
@@ -127,7 +138,7 @@ $(function () { // DOM ready
                     $('.refreshLog').click(function () { // Actualizar Log
                         document.getElementById("contentCanva").innerHTML = ''; // Clear response
                         setTimeout(function () { // Timeout
-                            getLog(urlLogs+'?v=' + Date.now()); // Get logs
+                            getLog(urlLogs + '?v=' + Date.now()); // Get logs
                         }, 100); // 1 second
                     }); // End refresh log
                 } else {
@@ -140,7 +151,7 @@ $(function () { // DOM ready
                 $('.refreshLog').click(function () { // Actualizar Log
                     document.getElementById("contentCanva").innerHTML = ''; // Clear response
                     setTimeout(function () { // Timeout
-                        getLog(urlLogs+'?v=' + Date.now()); // Get logs
+                        getLog(urlLogs + '?v=' + Date.now()); // Get logs
                     }, 100); // 1 second
                 }); // End refresh log
             }); // End fetch
@@ -159,11 +170,9 @@ $(function () { // DOM ready
 
         return [year, month, day].join('');
     }
-
-    getLog(urlLogs+'?v=' + Date.now()); // Get logs
-
+    getLog(urlLogs + '?v=' + Date.now()); // Get logs
     let offcanvasLogs = document.getElementById('offcanvasLogs') // Offcanvas
     offcanvasLogs.addEventListener('shown.bs.offcanvas', function () { // Offcanvas shown
-        getLog(urlLogs+'?v=' + Date.now()); // Get logs
+        getLog(urlLogs + '?v=' + Date.now()); // Get logs
     }) // End offcanvas shown
 }); // End ready

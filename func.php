@@ -1,9 +1,10 @@
 ﻿<?php
+function version() {
+    return "1.0.16";
+}
 function defaultConfigData() // default config data
-{
-    $datos = array(
-        'mssql' => array('srv' => '', 'db' => '', 'user' => '', 'pass' => ''), 'logConexion' => array('success' => false, 'error' => true), 'api' => array('url' => "http://52.38.68.90/hrc/api/novedades/", 'user' => 'admin', 'pass' => 'admin'), 'webService' => array('url' => "http:/localhost:6400/RRHHWebService/"), 'logNovedades' => array('success' => true, 'error' => true), 'proxy' => array('ip' => '', 'port' => '', 'enabled' => false), 'borrarLogs' => array('estado' => true, 'dias' => 31)
-    );
+{ $datos=array('mssql'=>array('srv'=>'', 'db'=>'', 'user'=>'', 'pass'=>''), 'logConexion'=>array('success'=>false, 'error'=>true), 'api'=>array('url'=>"https://hr-process.com/hrctest/api/novedades/", 'user'=>'admin', 'pass'=>'admin'), 'webService'=>array('url'=>"http:/localhost:6400/RRHHWebService/"), 'logNovedades'=>array('success'=>true, 'error'=>true), 'proxy'=>array('ip'=>'', 'port'=>'', 'enabled'=>false), 'borrarLogs'=>array('estado'=>true, 'dias'=>31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
+);
     return $datos;
 }
 function test_input($data) // Funcion para limpiar los datos de entrada
@@ -104,9 +105,29 @@ function eliminarNovedad($FicLega, $FicFech, $FicNove, $link) // Obtiene los leg
                 $data[] = $mensaje[3];
             }
         }
-        fileLogs('Error al Eliminar Novedad '. $data[0], __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); 
-        fileLogs('Error al Eliminar Novedad '. $data[0], __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); 
+        fileLogs('Error al Eliminar Novedad ' . $data[0], __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+        fileLogs('Error al Eliminar Novedad ' . $data[0], __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr');
         exit;
+    }
+}
+function eliminarNovedadPeriodo($FicLega, $Ini, $Fin, $FicNove, $link) // Obtiene los legajos de la base de datos CH
+{
+    $params  = array();
+    $options = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
+    // require __DIR__ . '/conn.php';
+    $query = "DELETE FROM FICHAS3 WHERE FICHAS3.FicLega = '$FicLega' AND FICHAS3.FicFech BETWEEN '$Ini' AND '$Fin' AND FICHAS3.FicNove = '$FicNove'";
+    $stmt  = sqlsrv_query($link, $query, $params, $options);
+    if (($stmt)) {
+        return true;
+    } else {
+        if (($errors = sqlsrv_errors()) != null) {
+            foreach ($errors as $error) {
+                $mensaje = explode(']', $error['message']);
+                $data[] = $mensaje[3];
+            }
+        }
+        fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+        fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr');
     }
 }
 function filtrarObjeto($array, $key, $valor) // Funcion para filtrar un objeto
@@ -208,8 +229,9 @@ function apiData($url, $auth, $proxy, $timeout = 10) // Función para obtener da
     return ($data_content) ? $data_content : fileLog("No datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log") . fileLog("No datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // si no hay datos, escribir en el log
     exit;
 }
-function pingApi($url, $auth, $proxy, $timeout = 5) // Función para verificar la conexión a la API
+function pingApi($url, $auth, $proxy, $timeout = 10) // Función para verificar la conexión a la API
 {
+    $iniPingApiWF = microtime(true); // Iniciamos el contador de tiempo de conexion
     $proxyIP     = $proxy[0]; // IP del proxy
     $proxyPort   = $proxy[1]; // Puerto del proxy
     $proxyEnable = $proxy[2]; // Habilitado o no
@@ -233,9 +255,16 @@ function pingApi($url, $auth, $proxy, $timeout = 5) // Función para verificar l
     $curl_errno = curl_errno($ch); // get error code
     $curl_error = curl_error($ch); // get error information
     if ($curl_errno > 0) { // si hay error
+
+        $finPingApiWF = microtime(true); // Terminamos el contador de tiempo de conexion
+        $durPingApiWF = (round($finPingApiWF - $iniPingApiWF, 2)); // Obtenemos la duracion de la conexion en segundos
+
         $text = "cURL Error ($curl_errno): $curl_error"; // set error message
         fileLog($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorPingAPI_WF.log"); // escribir en el log
+        fileLog("Duracion Ping ApiWF $durPingApiWF segundos.", __DIR__ . "/logs/errores/" . date('Ymd') . "_errorPingAPI_WF.log"); // escribir en el log
         fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
+        fileLog("Duracion Ping ApiWF $durPingApiWF segundos.", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
+
         respuestaScript($text, 'Error');
         exit; // salimos del script
     }
@@ -411,6 +440,7 @@ function validar_fecha($fecha) // Funcion para validar la fecha
 }
 function pingWebService($url) // Funcion para validar que el Webservice de Control Horario esta disponible
 {
+    $iniPingWebService = microtime(true); // Iniciamos el contador de tiempo de conexion
     $ch = curl_init(); // Inicializar el objeto curl
     curl_setopt($ch, CURLOPT_URL, $url); // Establecer la URL
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Establecer que retorne el contenido del servidor
@@ -423,6 +453,10 @@ function pingWebService($url) // Funcion para validar que el Webservice de Contr
         $text = "Error Ping WebService. \"Cod: $curl_errno: $curl_error\""; // set error message
         fileLog($text, __DIR__ . '/logs/errores/' . date('Ymd') . '_errorWebService.log'); // escribir en el log
         fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
+        $finPingWebService = microtime(true); // Terminamos el contador de tiempo de conexion
+        $durPingWebService = (round($finPingWebService - $iniPingWebService, 2)); // Obtenemos la duracion de la conexion en segundos
+        fileLog("Duracion Ping WebService $durPingWebService segundos.", __DIR__ . '/logs/errores/' . date('Ymd') . '_errorWebService.log'); // escribir en el log
+        fileLog("Duracion Ping WebService $durPingWebService segundos.", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
         respuestaScript($text, 'Error'); // retornar error
         exit; // salimos del script
     }
@@ -445,9 +479,9 @@ function respuestaProcesoWebService($url) // Funcion para procesar la respuesta 
         curl_setopt($ch, CURLOPT_URL, $url); // set url to post to
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // return the transfer as a string
         $respuesta = curl_exec($ch); // ejecutar curl
+        curl_close($ch); // cerrar curl
+        return respuestaWebService($respuesta); // retornar el estado del proceso
     } while (respuestaWebService($respuesta) == 'Pendiente'); // bucle hasta que el estado sea diferente de pendiente
-    curl_close($ch); // cerrar curl
-    return respuestaWebService($respuesta); // retornar el estado del proceso
 }
 function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $Laboral, $Novedad, $Observacion, $Horas, $url) // Funcion para ingresar la novedad con el WebService de Control Horario
 {
@@ -657,10 +691,10 @@ function dateDifference($date_1, $date_2, $differenceFormat = '%a') // diferenci
 }
 function borrarLogs($path, $dias, $ext) // borra los logs a partir de una cantidad de días
 {
-    $urlJson = __DIR__ . '\config.json'; // obtengo la ruta del archivo json
-    $dataJson = file_get_contents($urlJson); // obtengo el contenido del archivo json
-    $dataJson = json_decode($dataJson, true); // decodifico el json
-    if ($dataJson['borrarLogs']['estado'] == true) { // si está activado el borrado de logs
+    $pathConfig  = __DIR__ . '\data.php'; // ruta del archivo data.php
+    $dataConfig = parse_ini_file($pathConfig, true); // Obtenemos los datos del data.php
+
+    if ($dataConfig['borrarLogs']['estado'] == true) { // si está activado el borrado de logs
         $files = glob($path . '*' . $ext); //obtenemos el nombre de todos los ficheros
         foreach ($files as $file) { // recorremos todos los ficheros
             $lastModifiedTime = filemtime($file); // obtenemos la fecha de modificación del fichero
@@ -676,13 +710,12 @@ function borrarLogs($path, $dias, $ext) // borra los logs a partir de una cantid
 }
 function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
 {
-    $urlJson  = __DIR__ . '\config.json'; // ruta del archivo json
-    $dataJson = file_get_contents($urlJson); // obtenemos el contenido del archivo json
-    $dataJson = json_decode($dataJson, true); // decodificamos el json
-    $logNovedadesOk = $dataJson['logNovedades']['success'];
-    $logNovedadesEr = $dataJson['logNovedades']['error'];
-    $logConnOk      = $dataJson['logConexion']['success'];
-    $logConnErr     = $dataJson['logConexion']['error'];
+    $pathConfig  = __DIR__ . '\data.php'; // ruta del archivo data.php
+    $dataConfig = parse_ini_file($pathConfig, true); // Obtenemos los datos del data.php
+    $logNovedadesOk = $dataConfig['logNovedades']['success'];
+    $logNovedadesEr = $dataConfig['logNovedades']['error'];
+    $logConnOk      = $dataConfig['logConexion']['success'];
+    $logConnErr     = $dataConfig['logConexion']['error'];
     $date     = date('d-m-Y H:i:s'); // obtenemos la fecha actual
     $textJson = $text; // obtenemos el texto a escribir
     $text     = $date . ' ' . $text . tipoEjecucion() . "\n"; // armamos el texto a escribir
@@ -691,6 +724,7 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
             if ($logNovedadesOk) : // si está activado el log de novedades exitosa
                 $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
+                // respuestaScript($text, 'ok'); // Respuesta del script
             endif;
             break;
         case 'novErr': // si es un log de novedades fallida
@@ -712,7 +746,7 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
             endif;
             break;
         case 'json': // si es un log de json
-            header("Content-Type: application/json; charset=utf-8"); // json response
+            //header("Content-Type: application/json; charset=utf-8"); // json response
             $log = fopen($ruta_archivo, 'w'); // abrimos el archivo y sobreescribimos
             fwrite($log, $textJson); // escribimos en el archivo
             break;
@@ -736,6 +770,21 @@ function getDataJson($url) // obtiene el json de la url
         $data = file_get_contents($url); // obtenemos el contenido del archivo
         if ($data) { // si el contenido no está vacío
             $data = json_decode($data, true); // decodificamos el json
+            return $data; // devolvemos el json
+        } else { // si el contenido está vacío
+            fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
+        }
+    } else { // si no existe el archivo
+        fileLog("No existe archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
+        return false; // devolvemos false
+    }
+}
+function getDataIni($url) // obtiene el json de la url
+{
+    if (file_exists($url)) { // si existe el archivo
+        $data = file_get_contents($url); // obtenemos el contenido del archivo
+        if ($data) { // si el contenido no está vacío
+            $data = parse_ini_file($url, true); // Obtenemos los datos del data.php
             return $data; // devolvemos el json
         } else { // si el contenido está vacío
             fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
@@ -783,7 +832,6 @@ function fechaHora2()
     $t = date("Y-m-d H:i:s");
     return $t;
 }
-
 function timeZone()
 {
     return date_default_timezone_set('America/Argentina/Buenos_Aires');
@@ -791,4 +839,139 @@ function timeZone()
 function timeZone_lang()
 {
     return setlocale(LC_TIME, "es_ES");
+}
+function write_ini_file($assoc_arr, $path, $has_sections = false)
+{
+    $content = "; <?php exit; ?> <-- ¡No eliminar esta línea! --> \n";
+    $content .= "; \n";
+    $content .= "; ###########################################################\n";
+    $content .= "; ######## ARCHIVO DE CONFIGURACIÓN DEL SCRIPT WF CH ########\n";
+    $content .= "; ###########################################################\n";
+    $content .= "; \n";
+    $content .= "; \n";
+    if ($has_sections) {
+        foreach ($assoc_arr as $key => $elem) {
+            $content .= "[" . $key . "]\n";
+            foreach ($elem as $key2 => $elem2) {
+                if (is_array($elem2)) {
+                    for ($i = 0; $i < count($elem2); $i++) {
+                        $content .= $key2 . "[] =\"" . $elem2[$i] . "\"\n";
+                    }
+                } else if ($elem2 == "") $content .= $key2 . " =\n";
+                else $content .= $key2 . " = \"" . $elem2 . "\"\n";
+            }
+        }
+    } else {
+        foreach ($assoc_arr as $key => $elem) {
+            if (is_array($elem)) {
+                for ($i = 0; $i < count($elem); $i++) {
+                    $content .= $key . "[] = \"" . $elem[$i] . "\"\n";
+                }
+            } else if ($elem == "") $content .= $key . " = \n";
+            else $content .= $key . " = \"" . $elem . "\"\n";
+        }
+    }
+
+    if (!$handle = fopen($path, 'w')) {
+        return false;
+    }
+
+    $content .= "; \n";
+    $content .= "; \n";
+    $content .= ";   _  _   ___      ___    ___    _  _   ___   _   _   _      _____   ___   _  _    ___  \n";
+    $content .= ";  | || | | _ \    / __|  / _ \  | \| | / __| | | | | | |    |_   _| |_ _| | \| |  / __| \n";
+    $content .= ";  | __ | |   /   | (__  | (_) | | .` | \__ \ | |_| | | |__    | |    | |  | .` | | (_ | \n";
+    $content .= ";  |_||_| |_|_\    \___|  \___/  |_|\_| |___/  \___/  |____|   |_|   |___| |_|\_|  \___| \n";
+    $content .= "; \n";
+    $content .= "; \n";
+    $content .= "; ## CONFIGURACION DE CONEXION A MS SQLSERVER ##\n";
+    $content .= "; [mssql] \n";
+    $content .= ";  srv  = string servidor mssql o ip. Si es Local puede ir un punto\n";
+    $content .= ";  db   = string con el nombre de la base de datos\n";
+    $content .= ";  user = string con el usuario de la base de datos\n";
+    $content .= ";  pass = string con el password de la base de datos\n";
+    $content .= "; < --- >\n";
+    $content .= "; \n";
+    $content .= "; ## ACTIVAR LOGS DE CONEXION A LA DB MSSQL ##\n";
+    $content .= "; [logConexion]\n";
+    $content .= ";  success  = ingresar un 1 = activo. Dejar vacio si esta inactivo\n";
+    $content .= ";  error    = ingresar un 1 = activo. Dejar vacio si esta inactivo.\n";
+    $content .= "; < --- >\n";
+    $content .= "; \n";
+    $content .= "; ## CONFIGURACION DE CONEXION A LA API DE WORKFLOW DE NOVEDADES (WF) ##\n";
+    $content .= "; [api]\n";
+    $content .= ";  url  = string con la ruta de conexion a la API workflow. Ejemplo \"https://hr-process.com/hrctest/api/novedades/\" \n";
+    $content .= ";  user = string con el usuario de autenticación a la API. Ejemplo \"Admin\"\n";
+    $content .= ";  pass = string con el password de autenticación a la API. Ejemplo \"Admin\"\n";
+    $content .= "; < --- >\n";
+    $content .= "; \n";
+    $content .= "; ## CONFIGURACION DE CONEXION AL WEBSERVICE DE CONTROL HORARIO (CH) ##\n";
+    $content .= "; [webService]\n";
+    $content .= ";  url = string con la ruta de conexion al webservice de Control Horario. Ejemplo \"http://192.168.1.202:6400/RRHHWebService/\" \n";
+    $content .= "; < --- >\n";
+    $content .= "; \n";
+    $content .= "; ## ACTIVAR LOGS DE NOVEDADES INGRESADAS CORRECTAMENTE(success) E INCORRECTAMENTE(error) ##\n";
+    $content .= "; [logNovedades]\n";
+    $content .= ";  success = ingresar un 1 = activo. Dejar vacio si esta inactivo\n";
+    $content .= ";  error   = ingresar un 1 = activo. Dejar vacio si esta inactivo\n";
+    $content .= "; < --- >\n";
+    $content .= "; \n";
+    $content .= "; ## CONFIGURACION DE PROXY. SI LA CONEXION A INTERNET PASAS POR UN PROXY ##\n";
+    $content .= "; [proxy]\n";
+    $content .= ";  ip      = direccion de ip del proxy\n";
+    $content .= ";  puerto  = numero de puerto del proxy\n";
+    $content .= ";  enabled = ingresar un 1 = activo. Dejar vacio si esta inactivo\n";
+    $content .= "; < --- >\n";
+    $content .= "; \n";
+    $content .= "; ## ACTIVAR EL BORRADO DE LOGS ##\n";
+    $content .= "; [borrarLogs]\n";
+    $content .= ";  estado = ingresar un 1 = activo. Dejar vacio si esta inactivo. \"Al estar inactivo nunca se eliminarán los logs que genera el script\"\n";
+    $content .= ";  dias   = numero con cantidad de días a borrar los logs que genera el script. \"Valor minimo 1\".\n";
+    $content .= "; < --- >\n";
+    $content .= "; \n";
+    $content .= "; \n";
+    $content .= "; ##########################################\n";
+    $content .= "; ### --> autor  : Norberto CH           ###\n";
+    $content .= "; ### --> para   : HR Consulting         ###\n";
+    $content .= "; ### --> e-mail : nch@outlook.com.ar    ###\n";
+    $content .= "; ##########################################\n";
+    $success = fwrite($handle, $content);
+    fclose($handle);
+
+    return $success;
+}
+function setErrorApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
+{
+    $sendApiData   = sendApiData($apiUrl . '?TYPE=respuesta&data=[' . $jsonData . ']', $auth, $proxy, 10, ''); // Enviamos el objeto JSON a la API
+    $respuesta     = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
+    if ($respuesta->SUCCESS == 'YES') {
+        $textRespuesta = "Solicitud ($solcitud) actualizada correctamente en WF con status (N)"; // Texto de la respuesta envio WF
+    } else {
+        $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
+    }
+
+    fileLogs("$textRespuesta\nResponce API WF: $sendApiData", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+}
+function setExportadoApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
+{
+    $sendApiData = sendApiData($apiUrl . "?TYPE=update&data=[$jsonData]", $auth, $proxy, 10, ''); // Enviamos el objeto JSON a la API notificando que se termino de procesar la novedad con status 'E' 
+    $respuesta   = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
+
+    if ($respuesta->SUCCESS == 'YES') {
+        $textRespuesta = "Solicitud ($solcitud) actualizada correctamente en WF con status (E)"; // Texto de la respuesta envio WF
+    } else {
+        $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
+    }
+
+    fileLogs("$textRespuesta\nResponce API WF: $sendApiData", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+}
+function finPendienteLog($ini, $solicitud, $tipo = 'P = Pendiente')
+{
+    $fin = microtime(true); // Tiempo de finalizacion del envio al Api
+    $dur = (round($fin - $ini, 2)); // Duracion del envio al Api
+    fileLogs("Fin Registro WF ($tipo). Solicitud: " . $solicitud . ". Dur: $dur", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+}
+function iniPendienteLog($solicitud, $tipo = 'P = Pendiente')
+{
+    fileLogs("Inicio Registro WF ($tipo). Solicitud: " . $solicitud, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
 }

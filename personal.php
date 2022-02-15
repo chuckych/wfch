@@ -23,11 +23,10 @@ $FechaNovLoc = ($fechaHoraPersonal['FechaHora']); // Fecha y hora del personal e
 
 if ($FechaNovDB > $FechaNovLoc) : // Si la fecha y hora del personal en la base de datos es mayor que la del archivo local
     /** CREAMOS OBJETO DE LA TABLA PERSONAL DE CH */
-    $objetoLegajosCH = dataNovedades($link); // obtenemos el Objeto de la tabla novedades de CH
+    //$objetoLegajosCH = dataNovedades($link); // obtenemos el Objeto de la tabla novedades de CH
     $objetoLegajosCH = (dataLegajos($link)); // Obtengo los legajos de la tabla control horario para crear un objeto con el Legajo y ApNo
     fileLogs(json_encode(lastUpdateTabla($link, 'PERSONAL'), JSON_PRETTY_PRINT), __DIR__ . "/logs/data/fechaHoraPersonal.json", 'json'); // Actualizamos el archivo local con la fecha y hora del personal
     fileLogs("Se actualizo el archivo \"fechaHoraPersonal.json\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
-
     fileLogs(json_encode($objetoLegajosCH, JSON_PRETTY_PRINT), __DIR__ . "/logs/data/personal.json", 'json'); // Actualizamos el archivo local con el objeto del personal
     fileLogs("Se actualizo el archivo \"personal.json\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
 endif;
