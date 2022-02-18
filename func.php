@@ -1,6 +1,6 @@
 ﻿<?php
 function version() {
-    return "1.0.16";
+    return "1.0.17";
 }
 function defaultConfigData() // default config data
 { $datos=array('mssql'=>array('srv'=>'', 'db'=>'', 'user'=>'', 'pass'=>''), 'logConexion'=>array('success'=>false, 'error'=>true), 'api'=>array('url'=>"https://hr-process.com/hrctest/api/novedades/", 'user'=>'admin', 'pass'=>'admin'), 'webService'=>array('url'=>"http://localhost:6400/RRHHWebService/"), 'logNovedades'=>array('success'=>true, 'error'=>true), 'proxy'=>array('ip'=>'', 'port'=>'', 'enabled'=>false), 'borrarLogs'=>array('estado'=>true, 'dias'=>31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
@@ -718,12 +718,14 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
     $logConnErr     = $dataConfig['logConexion']['error'];
     $date     = date('d-m-Y H:i:s'); // obtenemos la fecha actual
     $textJson = $text; // obtenemos el texto a escribir
+    $text2    = $text. "\n"; // armamos el texto a escribir
     $text     = $date . ' ' . $text . tipoEjecucion() . "\n"; // armamos el texto a escribir
     switch ($tipo): // según el tipo de log
         case 'novOk': // si es un log de novedades exitosa
             if ($logNovedadesOk) : // si está activado el log de novedades exitosa
                 $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
+                respuestaScript($text2, 'ok');
                 // respuestaScript($text, 'ok'); // Respuesta del script
             endif;
             break;
@@ -731,30 +733,35 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
             if ($logNovedadesEr) : // si está activado el log de novedades fallida
                 $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
+                respuestaScript($text2, 'ok');
             endif;
             break;
         case 'conOk': // si es un log de conexión exitosa
             if ($logConnOk) : // si está activado el log de conexión exitosa
                 $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
+                respuestaScript($text2, 'ok');
             endif;
             break;
         case 'conErr': // si es un log de conexión fallida
             if ($logConnErr) : // si está activado el log de conexión fallida
                 $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
+                respuestaScript($text2, 'ok');
             endif;
             break;
         case 'json': // si es un log de json
             //header("Content-Type: application/json; charset=utf-8"); // json response
             $log = fopen($ruta_archivo, 'w'); // abrimos el archivo y sobreescribimos
             fwrite($log, $textJson); // escribimos en el archivo
+            respuestaScript($text2, 'ok');
             break;
         default:
             $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
             fwrite($log, $text); // escribimos en el archivo
             break;
             fclose($log); // cerramos el archivo
+            respuestaScript($text2, 'ok');
     endswitch; // fin del switch
 };
 function fileLogsJson($text, $ruta_archivo) // escribe  el log de novedades
@@ -799,7 +806,7 @@ function respuestaScript($mensaje, $status) // genera la respuesta del script cu
 
     $tipo = tipoEjecucion(); // obtenemos el tipo de ejecución
 
-    echo (($_SERVER["argv"][1] ?? '') == 'echo') ? $mensaje . $tipo : '';  // si el argumento es echo, escribimos en pantalla
+    echo (($_SERVER["argv"][1] ?? '') == 'echo') ? $mensaje : '';  // si el argumento es echo, escribimos en pantalla
 
     $_GET['script'] = $_GET['script'] ?? false; // si no existe el parametro script, lo setea a false
     if ($_GET['script']) { // si es una petición con el parametro get script=true
@@ -810,7 +817,7 @@ function respuestaScript($mensaje, $status) // genera la respuesta del script cu
     }
     $_GET['echo'] = $_GET['echo'] ?? false; // si no existe el parametro echo, lo setea a false
     if ($_GET['echo']) { // si es una petición con el parametro get echo=true
-        echo $mensaje . $tipo; // devuelve la respuesta
+        echo $mensaje; // devuelve la respuesta
         exit(); // Salir
     }
     $_GET['html'] = $_GET['html'] ?? false; // si no existe el parametro html, lo setea a false
@@ -945,12 +952,12 @@ function setErrorApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
     $sendApiData   = sendApiData($apiUrl . '?TYPE=respuesta&data=[' . $jsonData . ']', $auth, $proxy, 10, ''); // Enviamos el objeto JSON a la API
     $respuesta     = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
     if ($respuesta->SUCCESS == 'YES') {
-        $textRespuesta = "Solicitud ($solcitud) actualizada correctamente en WF con status (N)"; // Texto de la respuesta envio WF
+        $textRespuesta = "Solicitud ($solcitud) actualizada correctamente en WF con status \"N\""; // Texto de la respuesta envio WF
     } else {
         $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
     }
 
-    fileLogs("$textRespuesta\nResponce API WF: $sendApiData", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+    fileLogs("$textRespuesta", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
 }
 function setExportadoApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
 {
@@ -958,12 +965,12 @@ function setExportadoApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
     $respuesta   = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
 
     if ($respuesta->SUCCESS == 'YES') {
-        $textRespuesta = "Solicitud ($solcitud) actualizada correctamente en WF con status (E)"; // Texto de la respuesta envio WF
+        $textRespuesta = "Solicitud ($solcitud) actualizada correctamente en WF con status \"E\""; // Texto de la respuesta envio WF
     } else {
         $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
     }
 
-    fileLogs("$textRespuesta\nResponce API WF: $sendApiData", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+    fileLogs("$textRespuesta", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
 }
 function finPendienteLog($ini, $solicitud, $tipo = 'P = Pendiente')
 {

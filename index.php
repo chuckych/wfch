@@ -53,9 +53,8 @@ $urlWebService = $dataJson['webService']['url']; // Url del webservice
 $pingApi = (json_decode(pingApi($dataJson['api']['url'] . "?status=Ping", $auth, $proxy))); // Ping de la API
 
 if ($pingApi->SUCCESS != 'YES') { // Si la respuesta de la pingApi de WF es NO
-    $text = 'Error al conectar con API WF'; // Texto para el log
-    fileLogs($text . ' - ' . $pingApi->ERROR, __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log", 'novErr'); // Guardo el log
-    respuestaScript($text . ' - ' . $pingApi->ERROR, 'Error'); // Respuesta del script
+    $text = 'Error al conectar con API WF'. ' - ' . $pingApi->ERROR; // Texto para el log
+    fileLogs($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log", 'novErr'); // Guardo el log
     exit; // Salgo deL SCRIPT
 }
 /** */
@@ -119,13 +118,11 @@ if ($dataApi->SUCCESS != 'YES') { // Si la respuesta de la API de WF es NO
     $text = 'Error al obtener los datos de la API WF'; // Texto para el log
     fileLogs($dataApi->ERROR, __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log", 'novErr'); // Guardo el log
     sqlsrv_close($link); // Cierro la conexión MSQL
-    respuestaScript($text, 'Error'); // Respuesta del script
     exit; // Salgo deL SCRIPT
 }
 
 if ($dataApi->count <= 0) { // Verifico si la API devuelve datos, sino salgo del script
     fileLogs("No Hay Novedades Pendientes", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardo el log
-    respuestaScript('No Hay Novedades Pendientes', 'ok'); // Respuesta del script
     sqlsrv_close($link); // Cierro la conexión MSQL
     exit; // Salgo deL SCRIPT
 }
@@ -140,7 +137,8 @@ require __DIR__ . '/personal.php'; // Personal
 /** */
 
 /** Recorrer los datos de la API WF  */
-fileLogs("Inicio de Proceso de Novedades:", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de proceso de Novedades
+$textInicio = "INICIO DE PROCESO DE SOLICITUDES. TOTAL: ($dataApi->count):";
+fileLogs($textInicio, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de proceso de Novedades
 foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para crear un objeto con los datos de la API
     $textLog = '';
     $dataApi = array( // Creo un array con los datos de la API
@@ -472,10 +470,9 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
 }
 $tiempo_fin = microtime(true);
 $duracion   = (round($tiempo_fin - $tiempo_ini, 2));
-$textNov = "Fin de Proceso de Novedades. Dur: \"$duracion Segundos\"";
+$textFin = "FIN DE PROCESO DE SOLICITUDES. Dur: \"$duracion Segundos\"";
 $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log"; // Ruta del archivo de log
-fileLogs($textNov, $pathLog, 'novOk'); // Guardamos el texto de Fin de Proceso de Novedades en el archivo de log
+fileLogs($textFin, $pathLog, 'novOk'); // Guardamos el texto de Fin de Proceso de Novedades en el archivo de log
 sqlsrv_close($link);
-respuestaScript($textNov, 'ok'); // Respuesta del script
 /**  */
 exit;
