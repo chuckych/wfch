@@ -851,9 +851,7 @@ function write_ini_file($assoc_arr, $path, $has_sections = false)
 {
     $content = "; <?php exit; ?> <-- ¡No eliminar esta línea! --> \n";
     $content .= "; \n";
-    $content .= "; ###########################################################\n";
-    $content .= "; ######## ARCHIVO DE CONFIGURACIÓN DEL SCRIPT WF CH ########\n";
-    $content .= "; ###########################################################\n";
+    $content .= "; --> ARCHIVO DE CONFIGURACIÓN DEL SCRIPT WF CH <--\n";
     $content .= "; \n";
     $content .= "; \n";
     if ($has_sections) {
@@ -883,12 +881,6 @@ function write_ini_file($assoc_arr, $path, $has_sections = false)
         return false;
     }
 
-    $content .= "; \n";
-    $content .= "; \n";
-    $content .= ";   _  _   ___      ___    ___    _  _   ___   _   _   _      _____   ___   _  _    ___  \n";
-    $content .= ";  | || | | _ \    / __|  / _ \  | \| | / __| | | | | | |    |_   _| |_ _| | \| |  / __| \n";
-    $content .= ";  | __ | |   /   | (__  | (_) | | .` | \__ \ | |_| | | |__    | |    | |  | .` | | (_ | \n";
-    $content .= ";  |_||_| |_|_\    \___|  \___/  |_|\_| |___/  \___/  |____|   |_|   |___| |_|\_|  \___| \n";
     $content .= "; \n";
     $content .= "; \n";
     $content .= "; ## CONFIGURACION DE CONEXION A MS SQLSERVER ##\n";
@@ -937,11 +929,9 @@ function write_ini_file($assoc_arr, $path, $has_sections = false)
     $content .= "; < --- >\n";
     $content .= "; \n";
     $content .= "; \n";
-    $content .= "; ##########################################\n";
-    $content .= "; ### --> autor  : Norberto CH           ###\n";
-    $content .= "; ### --> para   : HR Consulting         ###\n";
-    $content .= "; ### --> e-mail : nch@outlook.com.ar    ###\n";
-    $content .= "; ##########################################\n";
+    $content .= "; --> autor  : Norberto CH \n";
+    $content .= "; --> para   : HR Consulting \n";
+    $content .= "; --> e-mail : nch@outlook.com.ar \n";
     $success = fwrite($handle, $content);
     fclose($handle);
 
@@ -956,7 +946,6 @@ function setErrorApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
     } else {
         $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
     }
-
     fileLogs("$textRespuesta", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
 }
 function setExportadoApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)

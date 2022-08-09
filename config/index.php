@@ -123,7 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // Check if the form has been submit
     <!-- Inicio body -->
     <div class="container p-1 shadow-lg" style="max-width: 900px; background: #66615b">
         <!-- Contenedor -->
-        <form autocomplete=off class="p-4 bg-light" id="form" method="POST">
+        <form autocomplete=off class="p-4 bg-light" id="form" method="POST" action="index.php" >
             <!-- Formulario -->
             <div class="row m-0">
                 <!-- Fila -->

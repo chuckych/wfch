@@ -1,10 +1,8 @@
 ; <?php exit; ?> <-- ¡No eliminar esta línea! --> 
 ; 
-; ###########################################################
-; ######## ARCHIVO DE CONFIGURACIÓN DEL SCRIPT WF CH ########
-; ###########################################################
+; --> ARCHIVO DE CONFIGURACIÓN DEL SCRIPT WF CH <--
 ; 
-;  - crear o renombrar este archivo a data.php
+; 
 [mssql]
 srv = "."
 db = "Recursos_HRC60"
@@ -14,11 +12,11 @@ pass = "sa2019"
 success =
 error = "1"
 [api]
-url = "https://hr-process.com/hrctest/api/novedades/"
+url = "https://hr-process.com/cuenta/api/novedades/"
 user = "admin"
 pass = "admin"
 [webService]
-url = "http://localhost:6400/RRHHWebService/"
+url = "http:/localhost:6400/RRHHWebService/"
 [logNovedades]
 success = "1"
 error = "1"
@@ -29,13 +27,6 @@ enabled =
 [borrarLogs]
 estado = "1"
 dias = "1"
-; 
-; 
-;   _  _   ___      ___    ___    _  _   ___   _   _   _      _____   ___   _  _    ___  
-;  | || | | _ \    / __|  / _ \  | \| | / __| | | | | | |    |_   _| |_ _| | \| |  / __| 
-;  | __ | |   /   | (__  | (_) | | .` | \__ \ | |_| | | |__    | |    | |  | .` | | (_ | 
-;  |_||_| |_|_\    \___|  \___/  |_|\_| |___/  \___/  |____|   |_|   |___| |_|\_|  \___| 
-; 
 ; 
 ; ## CONFIGURACION DE CONEXION A MS SQLSERVER ##
 ; [mssql] 
@@ -83,8 +74,6 @@ dias = "1"
 ; < --- >
 ; 
 ; 
-; ##########################################
-; ### --> autor  : Norberto CH           ###
-; ### --> para   : HR Consulting         ###
-; ### --> e-mail : nch@outlook.com.ar    ###
-; ##########################################
+; --> autor  : Norberto CH
+; --> para   : HR Consulting
+; --> e-mail : nch@outlook.com.ar

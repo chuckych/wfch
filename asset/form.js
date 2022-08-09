@@ -42,43 +42,44 @@ $(function () { // DOM ready
 
     $("#form").bind("submit", function (e) { // Submit form
         e.preventDefault(); // Prevent default
-        $.ajax({ // Ajax
-            type: $(this).attr("method"), // Method
-            url: $(this).attr("action"), // URL
-            data: $(this).serialize(), // Data
-            dataType: "json", // Data type
-            beforeSend: function (data) { // Before send
-                $("#submit").prop("disabled", true); // Disable button
-                $("#submit").html("Guardar.."); // Change button text
-                $('#spanRespuesta').html('') // Clear response
-            },
-            success: function (data) { // Success
-                if (data.status == "ok") { // If status ok
-                    $("#submit").prop("disabled", false); // Enable button
-                    $("#submit").html("Guardar"); // Change button text
-                    $('#spanRespuesta').html('<b>' + data.Mensaje + '</b>') // Set response
-                    setTimeout(function () { // Timeout
-                        $('#spanRespuesta').html('') // Clear response
-                    }, 6000); // 6 seconds
-                } else { // If status error
-                    $("#submit").prop("disabled", false); // Enable button
-                    $("#submit").html("Guardars"); // Change button text
-                    $('#spanRespuesta').html('<span class="text-danger"><b>' + data.Mensaje + '</b></span>') // Set response
-                    setTimeout(function () { // Timeout
-                        $('#spanRespuesta').html('') // Clear response
-                    }, 6000); // 6 seconds
-                }
-            },
-            error: function () { // Error
+
+        $("#submit").prop("disabled", true); // Disable button
+        $("#submit").html("Guardar.."); // Change button text
+        $('#spanRespuesta').html('') // Clear response
+        
+        axios({
+            method: 'POST',
+            url: '../config/index.php',
+            data: $(this).serialize()
+        }).then(function (response) {
+            let data = response.data;
+            console.log(data.status);
+            if (data.status == "ok") { // If status ok
                 $("#submit").prop("disabled", false); // Enable button
+                $("#submit").html("Guardar"); // Change button text
+                $('#spanRespuesta').html('<b>' + data.Mensaje + '</b>') // Set response
+                setTimeout(function () { // Timeout
+                    $('#spanRespuesta').html('') // Clear response
+                }, 6000); // 6 seconds
+            } else { // If status error
+                $("#submit").prop("disabled", false); // Enable button
+                $("#submit").html("Guardar"); // Change button text
+                $('#spanRespuesta').html('<span class="text-danger"><b>' + data.Mensaje + '</b></span>') // Set response
+                setTimeout(function () { // Timeout
+                    $('#spanRespuesta').html('') // Clear response
+                }, 6000); // 6 seconds
+            }
+        }).catch(function (error) {
+            alert(error)
+            $("#submit").prop("disabled", false); // Enable button
                 $("#submit").html("Guardar"); // Change button text
                 $('#spanRespuesta').html('<span class="text-danger"><b>Error</b></span>') // Set response
                 setTimeout(function () { // Timeout
                     $('#spanRespuesta').html('') // Clear response
                 }, 6000); // 6 seconds
                 getLog(urlLogs + '?v=' + Date.now()); // Get logs
-            } // End error
-        }); // End ajax
+        })
+
     }); // End submit form
 
     getConfig(urlConfig, formatDate(fecha)); // Get config.php

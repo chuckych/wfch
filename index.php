@@ -1,5 +1,4 @@
 <?php
-
 /** Autor: Norberto CH: nchaquer@gmail.com */
 ini_set('max_execution_time', 900); // 15 minutos de tiempo maximo de ejecución
 header("Content-Type: application/json; charset=utf-8"); // json response
@@ -50,10 +49,10 @@ $urlWebService = $dataJson['webService']['url']; // Url del webservice
 /**  */
 
 /** Realizar un Ping a la API WF */
-$pingApi = (json_decode(pingApi($dataJson['api']['url'] . "?status=Ping", $auth, $proxy))); // Ping de la API
+$pingApi = (json_decode(pingApi($dataJson['api']['url'] . "?status=Ping", $auth, $proxy), true)); // Ping de la API
 
-if ($pingApi->SUCCESS != 'YES') { // Si la respuesta de la pingApi de WF es NO
-    $text = 'Error al conectar con API WF'. ' - ' . $pingApi->ERROR; // Texto para el log
+if ($pingApi['SUCCESS'] != 'YES') { // Si la respuesta de la pingApi de WF es NO
+    $text = 'Error al conectar con API WF'. ' - ' . $pingApi['ERROR']; // Texto para el log
     fileLogs($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log", 'novErr'); // Guardo el log
     exit; // Salgo deL SCRIPT
 }
@@ -84,9 +83,16 @@ require __DIR__ . '/novedades.php';  // Novedades
  * 
  */
 /**  */
+/** Obtener Personal de CH */
+require __DIR__ . '/personal.php'; // Personal
+/** Este objeto devuelve un array con los datos de los Legajo de control horario
+    'legajo' => 99999999,
+    'ApNo' => 'Nombre y Apellido',
+ */
+/** */
 
 /** LLAMAMOS A LA API DE WF */
-$dataApi = (json_decode(apiData($dataJson['api']['url'] . "?status=P,A", $auth, $proxy, 10))); // Obtengo los datos de la API WF
+$dataApi = json_decode((apiData($dataJson['api']['url'] . "?status=P,A", $auth, $proxy, 10)), true); // Obtengo los datos de la API WF
 /** Ejemplo de respuesta API 
      "SUCCESS": "YES",
     "FAILURE": "NO",
@@ -114,53 +120,45 @@ $dataApi = (json_decode(apiData($dataJson['api']['url'] . "?status=P,A", $auth, 
         }
  */
 /** CHEQUEAMOS LA RESPUESTA DE LA API DE WF */
-if ($dataApi->SUCCESS != 'YES') { // Si la respuesta de la API de WF es NO
+if ($dataApi['SUCCESS'] != 'YES') { // Si la respuesta de la API de WF es NO
     $text = 'Error al obtener los datos de la API WF'; // Texto para el log
-    fileLogs($dataApi->ERROR, __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log", 'novErr'); // Guardo el log
+    fileLogs($dataApi['ERROR'], __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log", 'novErr'); // Guardo el log
     sqlsrv_close($link); // Cierro la conexión MSQL
     exit; // Salgo deL SCRIPT
 }
 
-if ($dataApi->count <= 0) { // Verifico si la API devuelve datos, sino salgo del script
+if ($dataApi['count'] <= 0) { // Verifico si la API devuelve datos, sino salgo del script
     fileLogs("No Hay Novedades Pendientes", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardo el log
     sqlsrv_close($link); // Cierro la conexión MSQL
     exit; // Salgo deL SCRIPT
 }
 /** */
 
-/** Obtener Personal de CH */
-require __DIR__ . '/personal.php'; // Personal
-/** Este objeto devuelve un array con los datos de los Legajo de control horario
-    'legajo' => 99999999,
-    'ApNo' => 'Nombre y Apellido',
- */
-/** */
-
 /** Recorrer los datos de la API WF  */
-$textInicio = "INICIO DE PROCESO DE SOLICITUDES. TOTAL: ($dataApi->count):";
+$textInicio = "INICIO DE PROCESO DE SOLICITUDES. TOTAL: ($dataApi[count]):";
 fileLogs($textInicio, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de proceso de Novedades
-foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para crear un objeto con los datos de la API
+foreach ($dataApi['data'] as $key => $value) { // Recorro los datos de la API para crear un objeto con los datos de la API
     $textLog = '';
     $dataApi = array( // Creo un array con los datos de la API
-        'id_out'         => $value->id_out, // ID del registro de la API
-        'fecha_desde'    => (validar_fecha(fechaFormat($value->fecha_desde, 'd/m/Y'))) ? fechaFormat($value->fecha_desde, 'd/m/Y') : '', // Fecha desde como d/m/Y
-        'fecha_hasta'    => (validar_fecha(fechaFormat($value->fecha_hasta, 'd/m/Y'))) ? fechaFormat($value->fecha_hasta, 'd/m/Y') : '', // Fecha hasta como d/m/Y
-        'fecha_desdeStr' => ((fechaFormat($value->fecha_desde, 'Ymd'))) ? fechaFormat($value->fecha_desde, 'Ymd') : '', // Fecha desde como String Ymd
-        'fecha_hastaStr' => ((fechaFormat($value->fecha_hasta, 'Ymd'))) ? fechaFormat($value->fecha_hasta, 'Ymd') : '', // Fecha hasta como String Ymd
-        'horas'          => empty($value->horas) ? '00:00' : $value->horas, // Horas
-        'observaciones'  => $value->observaciones, // Observaciones
-        'dias_laborales' => ($value->dias_laborales) ? intval($value->dias_laborales) : 0,  // Dias laborales 0 = Todos los días, 1 = Solo en días laborales
-        'status'         => $value->status, // Status
-        'id_solicitud'         => $value->id_solicitud, // id_solicitud
+        'id_out'         => $value['id_out'], // ID del registro de la API
+        'fecha_desde'    => (validar_fecha(fechaFormat($value['fecha_desde'], 'd/m/Y'))) ? fechaFormat($value['fecha_desde'], 'd/m/Y') : '', // Fecha desde como d/m/Y
+        'fecha_hasta'    => (validar_fecha(fechaFormat($value['fecha_hasta'], 'd/m/Y'))) ? fechaFormat($value['fecha_hasta'], 'd/m/Y') : '', // Fecha hasta como d/m/Y
+        'fecha_desdeStr' => ((fechaFormat($value['fecha_desde'], 'Ymd'))) ? fechaFormat($value['fecha_desde'], 'Ymd') : '', // Fecha desde como String Ymd
+        'fecha_hastaStr' => ((fechaFormat($value['fecha_hasta'], 'Ymd'))) ? fechaFormat($value['fecha_hasta'], 'Ymd') : '', // Fecha hasta como String Ymd
+        'horas'          => empty($value['horas']) ? '00:00' : $value['horas'], // Horas
+        'observaciones'  => $value['observaciones'], // Observaciones
+        'dias_laborales' => ($value['dias_laborales']) ? intval($value['dias_laborales']) : 0,  // Dias laborales 0 = Todos los días, 1 = Solo en días laborales
+        'status'         => $value['status'], // Status
+        'id_solicitud'         => $value['id_solicitud'], // id_solicitud
     );
 
-    $novCodi  = (intval($value->novedad)) ?? ''; // Obtengo el codigo de la novedad por separado y pasamos valor a entero con la funcion intval
+    $novCodi  = (intval($value['novedad'])) ?? ''; // Obtengo el codigo de la novedad por separado y pasamos valor a entero con la funcion intval
     $horasNov = horaFormat($dataApi['horas']); // Formateamos las horas en 00:00
-    $horasNov = empty($value->horas) ? '00:00' : $value->horas; // Horas de la novedad devuelto por la API
+    $horasNov = empty($value['horas']) ? '00:00' : $value['horas']; // Horas de la novedad devuelto por la API
     $horasNov = (!esHora($horasNov)) ? '00:00' : $horasNov; // Si no es correcto le asigno 00:00
 
     $filtroNovedad = (filtrarObjeto($objetoNovedadesCH, 'CodNov', $novCodi)); // Filtramos el codigo de la novedad que viene de la api de WF con el objetoNovedadesCH para verificar que exista la novedad en CH y completar los datos faltantes.
-    $filtrarLegajo = (filtrarObjeto($objetoLegajosCH, 'legajo', intval($value->legajo))); // Filtramos el legajo que viene de la api de WF con el objetoLegajosCH para verificar que exista el legajo en CH y completar los datos faltantes.
+    $filtrarLegajo = (filtrarObjeto($objetoLegajosCH, 'legajo', intval($value['legajo']))); // Filtramos el legajo que viene de la api de WF con el objetoLegajosCH para verificar que exista el legajo en CH y completar los datos faltantes.
 
     if (
         $filtroNovedad // Si existe la novedad
@@ -168,8 +166,8 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
         && esHora($horasNov) // Si la hora no tiene un formato valido de 24 horas
         && !empty($dataApi['fecha_desde']) // Si la fecha desde no esta vacia
         && !empty($dataApi['fecha_hasta']) // Si la fecha hasta no esta vacia
-        && !empty($value->legajo) // Si el legajo no esta vacio
-        && fechaFormat($value->fecha_desde, 'Ymd') <= fechaFormat($value->fecha_hasta, 'Ymd') // Si la fecha desde es menor o igual a la fecha hasta
+        && !empty($value['legajo']) // Si el legajo no esta vacio
+        && fechaFormat($value['fecha_desde'], 'Ymd') <= fechaFormat($value['fecha_hasta'], 'Ymd') // Si la fecha desde es menor o igual a la fecha hasta
     ) : // Si cumplen todas las condiciones. Creamos el objeto data.
         $data[] = (array_merge($filtroNovedad, $dataApi, $filtrarLegajo)); // Hacemnos un merge con los datos del 'objetoNovedadesCH' al objeto 'dataApi' y 'objetoLegajosCH'.
         /** Ejemplo del objeto creado.
@@ -193,14 +191,14 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
         ),
          */
     else : // Si no cumplen alguna condicion
-        $textLog .= 'Nov: ' . $novCodi . '. Leg: ' . $value->legajo . '. ' . fechaFormat($value->fecha_desde, 'd/m/Y') . ' - ' . fechaFormat($value->fecha_hasta, 'd/m/Y') . ' ID_OUT: ' . $value->id_out . '.'; // Texto de Error
+        $textLog .= 'Nov: ' . $novCodi . '. Leg: ' . $value['legajo'] . '. ' . fechaFormat($value['fecha_desde'], 'd/m/Y') . ' - ' . fechaFormat($value['fecha_hasta'], 'd/m/Y') . ' ID_OUT: ' . $value['id_out'] . '.'; // Texto de Error
         $textLog .= ($filtrarLegajo) ? '' : " Legajo no existe en CH. "; // Si el legajo no existe en CH
         $textLog .= ($filtroNovedad) ? '' : " Novedad no existe en CH. "; // Si la novedad no existe en CH
-        $textLog .= (empty($value->fecha_desde)) ? ", Fecha desde vacia. " : ''; // Si la fecha desde esta vacia
-        $textLog .= (empty($value->fecha_hasta)) ? ", Fecha hasta vacia. " : ''; // Si la fecha hasta esta vacia
-        $textLog .= (empty($value->legajo)) ? ", Legajo vacio. " : '';    // Si el legajo esta vacio
+        $textLog .= (empty($value['fecha_desde'])) ? ", Fecha desde vacia. " : ''; // Si la fecha desde esta vacia
+        $textLog .= (empty($value['fecha_hasta'])) ? ", Fecha hasta vacia. " : ''; // Si la fecha hasta esta vacia
+        $textLog .= (empty($value['legajo'])) ? ", Legajo vacio. " : '';    // Si el legajo esta vacio
         $textLog .= (!esHora($horasNov)) ? ", Formato de horas erroneo. " : ''; // Si la hora no tiene un formato valido de 00:00
-        $textLog .= (fechaFormat($value->fecha_desde, 'Ymd') > fechaFormat($value->fecha_hasta, 'Ymd')) ? ", La fecha desde: " . $dataApi['fecha_desde'] . " es mayor que la fecha hasta " . $dataApi['fecha_hasta'] : ""; // Si la fecha desde es mayor a la fecha hasta, Si no, no hacemos nada
+        $textLog .= (fechaFormat($value['fecha_desde'], 'Ymd') > fechaFormat($value['fecha_hasta'], 'Ymd')) ? ", La fecha desde: " . $dataApi['fecha_desde'] . " es mayor que la fecha hasta " . $dataApi['fecha_hasta'] : ""; // Si la fecha desde es mayor a la fecha hasta, Si no, no hacemos nada
         $textLog .= "\n"; // Salto de linea
     endif;
 
@@ -209,7 +207,7 @@ foreach ($dataApi->data as $key => $value) { // Recorro los datos de la API para
         fileLogs("Error -> \n" . $textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); // Si hay texto de error lo guardamos en el archivo de log
         fileLogs("Error -> \n" . $textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
 
-        $jsonData = json_encode(array("legajo" => "$value->legajo", "fecha" => "$dataApi[fecha_desdeStr]", "novedad" => "$value->novedad", "status" => "N", "id_out" => "$value->id_out", "motivo" => urlencode($textLog))); // Creamos el array con los datos de la novedad para enviar a la API
+        $jsonData = json_encode(array("legajo" => "$value[legajo]", "fecha" => "$dataApi[fecha_desdeStr]", "novedad" => "$value[novedad]", "status" => "N", "id_out" => "$value[id_out]", "motivo" => urlencode($textLog))); // Creamos el array con los datos de la novedad para enviar a la API
         setErrorApi($jsonData, $value['id_solicitud'], $dataJson['api']['url'], $auth, $proxy);
         $jsonData = json_encode(array("status" => "E", "id_out" => "$value[id_out]")); // Creamos el objeto json para enviarlo al Api
         setExportadoApi($jsonData, $value['id_solicitud'], $dataJson['api']['url'], $auth, $proxy);
