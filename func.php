@@ -1,6 +1,6 @@
 ﻿<?php
 function version() {
-    return "1.0.19";
+    return "1.0.20";
 }
 function defaultConfigData() // default config data
 { $datos=array('mssql'=>array('srv'=>'', 'db'=>'', 'user'=>'', 'pass'=>''), 'logConexion'=>array('success'=>false, 'error'=>true), 'api'=>array('url'=>"https://hr-process.com/hrctest/api/novedades/", 'user'=>'admin', 'pass'=>'admin'), 'webService'=>array('url'=>"http://localhost:6400/RRHHWebService/"), 'logNovedades'=>array('success'=>true, 'error'=>true), 'proxy'=>array('ip'=>'', 'port'=>'', 'enabled'=>false), 'borrarLogs'=>array('estado'=>true, 'dias'=>31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
@@ -105,8 +105,8 @@ function eliminarNovedad($FicLega, $FicFech, $FicNove, $link) // Obtiene los leg
                 $data[] = $mensaje[3];
             }
         }
-        fileLogs('Error al Eliminar Novedad ' . $data[0], __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
-        fileLogs('Error al Eliminar Novedad ' . $data[0], __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr');
+        fileLogs('Error al Eliminar Novedad ' . $data[0], __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
+        fileLogs('Error al Eliminar Novedad ' . $data[0], __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
         exit;
     }
 }
@@ -126,8 +126,8 @@ function eliminarNovedadPeriodo($FicLega, $Ini, $Fin, $FicNove, $link) // Obtien
                 $data[] = $mensaje[3];
             }
         }
-        fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
-        fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr');
+        fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
+        fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
     }
 }
 function filtrarObjeto($array, $key, $valor) // Funcion para filtrar un objeto
@@ -812,18 +812,18 @@ function respuestaScript($mensaje, $status) // genera la respuesta del script cu
     if ($_GET['script']) { // si es una petición con el parametro get script=true
         header("Content-Type: application/json; charset=utf-8"); // json response
         $data = array('status' => $status, 'Mensaje' => "<br><br>$mensaje.$tipo"); // Mensaje
-        echo json_encode($data); // devuelve el json con la respuesta
-        exit(); // Salir
+        echo json_encode($data, JSON_PRETTY_PRINT); // devuelve el json con la respuesta
+        //exit(); // Salir
     }
     $_GET['echo'] = $_GET['echo'] ?? false; // si no existe el parametro echo, lo setea a false
     if ($_GET['echo']) { // si es una petición con el parametro get echo=true
         echo $mensaje; // devuelve la respuesta
-        exit(); // Salir
+        //exit(); // Salir
     }
     $_GET['html'] = $_GET['html'] ?? false; // si no existe el parametro html, lo setea a false
     if ($_GET['html']) { // si es una petición con el parametro get html=true
         echo "<html style='width:100%; height:100%; background-color: #ddd'><h3><div style='padding:20px;'>$mensaje$tipo</div></h3></html>"; // devuelve la respuesta
-        exit(); // Salir
+        //exit(); // Salir
     }
 }
 function fechaHora()
@@ -946,7 +946,7 @@ function setErrorApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
     } else {
         $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
     }
-    fileLogs("$textRespuesta", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+    fileLogs("$textRespuesta", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Guardamos el texto de la novedad en el archivo de log
 }
 function setExportadoApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
 {
@@ -959,15 +959,15 @@ function setExportadoApi($jsonData, $solcitud, $apiUrl, $auth, $proxy)
         $textRespuesta = $respuesta->MENSAJE; // Texto de la respuesta envio WF
     }
 
-    fileLogs("$textRespuesta", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+    fileLogs("$textRespuesta", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Guardamos el texto de la novedad en el archivo de log
 }
 function finPendienteLog($ini, $solicitud, $tipo = 'P = Pendiente')
 {
     $fin = microtime(true); // Tiempo de finalizacion del envio al Api
     $dur = (round($fin - $ini, 2)); // Duracion del envio al Api
-    fileLogs("Fin Registro WF ($tipo). Solicitud: " . $solicitud . ". Dur: $dur", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+    fileLogs("Fin Registro WF ($tipo). Solicitud: " . $solicitud . ". Dur: $dur", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
 }
 function iniPendienteLog($solicitud, $tipo = 'P = Pendiente')
 {
-    fileLogs("Inicio Registro WF ($tipo). Solicitud: " . $solicitud, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+    fileLogs("Inicio Registro WF ($tipo). Solicitud: " . $solicitud, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
 }

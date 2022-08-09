@@ -5,7 +5,7 @@ header("Content-Type: application/json; charset=utf-8"); // json response
 header("Access-Control-Allow-Origin: *"); // allow cross-domain requests
 header("Content-Type: text/html; charset=utf-8");
 error_reporting(E_ALL); // Reportar todos Los errores
-ini_set('display_errors', '0'); // 0 - off 1 - on 
+ini_set('display_errors', '1'); // 0 - off 1 - on 
 $tiempo_ini = microtime(true); // Tiempo inicial
 
 $_SERVER["argv"][1] = $_SERVER["argv"][1] ?? "";
@@ -53,7 +53,7 @@ $pingApi = (json_decode(pingApi($dataJson['api']['url'] . "?status=Ping", $auth,
 
 if ($pingApi['SUCCESS'] != 'YES') { // Si la respuesta de la pingApi de WF es NO
     $text = 'Error al conectar con API WF'. ' - ' . $pingApi['ERROR']; // Texto para el log
-    fileLogs($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log", 'novErr'); // Guardo el log
+    fileLogs($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log", ''); // Guardo el log
     exit; // Salgo deL SCRIPT
 }
 /** */
@@ -122,7 +122,7 @@ $dataApi = json_decode((apiData($dataJson['api']['url'] . "?status=P,A", $auth, 
 /** CHEQUEAMOS LA RESPUESTA DE LA API DE WF */
 if ($dataApi['SUCCESS'] != 'YES') { // Si la respuesta de la API de WF es NO
     $text = 'Error al obtener los datos de la API WF'; // Texto para el log
-    fileLogs($dataApi['ERROR'], __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log", 'novErr'); // Guardo el log
+    fileLogs($dataApi['ERROR'], __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log", ''); // Guardo el log
     sqlsrv_close($link); // Cierro la conexión MSQL
     exit; // Salgo deL SCRIPT
 }
@@ -133,10 +133,10 @@ if ($dataApi['count'] <= 0) { // Verifico si la API devuelve datos, sino salgo d
     exit; // Salgo deL SCRIPT
 }
 /** */
-
+$totalData = ($dataApi['count']); // Cantidad de datos de la API
 /** Recorrer los datos de la API WF  */
-$textInicio = "INICIO DE PROCESO DE SOLICITUDES. TOTAL: ($dataApi[count]):";
-fileLogs($textInicio, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de proceso de Novedades
+$textInicio = "INICIO DE PROCESO DE SOLICITUDES. TOTAL: ($totalData):";
+fileLogs($textInicio, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Log de Inicio de proceso de Novedades
 foreach ($dataApi['data'] as $key => $value) { // Recorro los datos de la API para crear un objeto con los datos de la API
     $textLog = '';
     $dataApi = array( // Creo un array con los datos de la API
@@ -199,13 +199,13 @@ foreach ($dataApi['data'] as $key => $value) { // Recorro los datos de la API pa
         $textLog .= (empty($value['legajo'])) ? ", Legajo vacio. " : '';    // Si el legajo esta vacio
         $textLog .= (!esHora($horasNov)) ? ", Formato de horas erroneo. " : ''; // Si la hora no tiene un formato valido de 00:00
         $textLog .= (fechaFormat($value['fecha_desde'], 'Ymd') > fechaFormat($value['fecha_hasta'], 'Ymd')) ? ", La fecha desde: " . $dataApi['fecha_desde'] . " es mayor que la fecha hasta " . $dataApi['fecha_hasta'] : ""; // Si la fecha desde es mayor a la fecha hasta, Si no, no hacemos nada
-        $textLog .= "\n"; // Salto de linea
+        //$textLog .= "\n"; // Salto de linea
     endif;
 
     if (!empty($textLog)) {
 
-        fileLogs("Error -> \n" . $textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr'); // Si hay texto de error lo guardamos en el archivo de log
-        fileLogs("Error -> \n" . $textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Log de Inicio de Ingreso de Novedades
+        fileLogs("Error: " . $textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", ''); // Si hay texto de error lo guardamos en el archivo de log
+        fileLogs("Error: " . $textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Log de Inicio de Ingreso de Novedades
 
         $jsonData = json_encode(array("legajo" => "$value[legajo]", "fecha" => "$dataApi[fecha_desdeStr]", "novedad" => "$value[novedad]", "status" => "N", "id_out" => "$value[id_out]", "motivo" => urlencode($textLog))); // Creamos el array con los datos de la novedad para enviar a la API
         setErrorApi($jsonData, $value['id_solicitud'], $dataJson['api']['url'], $auth, $proxy);
@@ -239,8 +239,8 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     $ini = microtime(true); // Iniciamos el contador de tiempo
                     $textError = "Error -> El legajo $value[legajo] tiene fecha de cierre en el periodo \"$value[fecha_desde] al $value[fecha_hasta]\"";
 
-                    fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr');
-                    fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+                    fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
+                    fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
 
                     /** Marcamos Con Status (N) en API WF*/
                     $textError = "Error al ingresar la solicitud $value[id_solicitud]. Periodo cerrado.";
@@ -269,8 +269,8 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     $ini = microtime(true); // Iniciamos el contador de tiempo
                     $textError = "El legajo $value[legajo] tiene dias presentes en el periodo $value[fecha_desde] a $value[fecha_hasta]";
 
-                    fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr');
-                    fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+                    fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
+                    fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
 
                     /** Marcamos Con Status (N) en API WF*/
                     $textError = "Error al ingresar la solicitud $value[id_solicitud]. Periodo con presencia.";
@@ -309,7 +309,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
 
                     $textNov = 'Novedad "(' . $value['CodNov'] . ')" "' . trim($value['NovDesc']) . '" ingresada. Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '". Periodo: "' . $date['fecha_desde'] . '" al "' . $date['fecha_hasta'] . '". Dur: ' . $durNov;
                     $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log"; // Ruta del archivo de log
-                    fileLogs($textNov, $pathLog, 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+                    fileLogs($textNov, $pathLog, ''); // Guardamos el texto de la novedad en el archivo de log
 
                     /** 
                      * * * * *  FIN DEL PROCESAR   * * * * *
@@ -320,7 +320,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     $durNov    = (round($finNov - $iniNov, 2)); // Duracion de ingreso Novedad
                     $textNov = 'Novedad "(' . $value['CodNov'] . ')" ' . trim($value['NovDesc']) . '. Ingresada: "NO". Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '". Fechas: "' . $date['fecha_desde'] . ' al ' . $date['fecha_hasta'] . '". Horas: "' . $value['horas'] . '" Dur:' . $durNov;
                     $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_error.log";
-                    fileLogs($textNov, $pathLog, 'novErr'); // Guardamos el texto de la novedad en el archivo de log
+                    fileLogs($textNov, $pathLog, ''); // Guardamos el texto de la novedad en el archivo de log
                 } // Fin del if que verifica si la novedad se ingreso correctamente
             } // Fin del foreach que recorre las novedades
 
@@ -338,13 +338,13 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     $durProc    = (round($finProc - $iniProc, 2)); // Duracion de de proceso de la novedad
                     $textNov = 'Periodo "' . $date['fecha_desde'] . ' a ' . $fechaHastaProc . '" procesado. Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '" Dur: ' . $durProc; // Texto de la novedad ingresada para gardar en el log
                     $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log"; // Rsuta del archivo de log
-                    fileLogs($textNov, $pathLog, 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+                    fileLogs($textNov, $pathLog, ''); // Guardamos el texto de la novedad en el archivo de log
                     audito_ch("P", "Proceso de Datos Legajo $value[legajo]. Desde: $date[fecha_desde] a $fechaHastaProc", $link);
                 else :
                     $terminadoProc = false; // Se cambia la bandera
                     $textNov = 'Novedad "(' . $value['CodNov'] . ')" ' . trim($value['NovDesc']) . '. Procesada: "NO". Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '". Fechas: "' . $date['fecha_desde'] . ' al ' . $fechaHastaProc . '". Horas: "' . $value['horas'] . '" Dur: ' . $durProc; // Texto de la novedad no ingresada para gardar en el log
                     $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_error.log"; // Ruta del archivo de log
-                    fileLogs($textNov, $pathLog, 'novErr'); // Guardamos el texto de la novedad en el archivo de log
+                    fileLogs($textNov, $pathLog, ''); // Guardamos el texto de la novedad en el archivo de log
                 endif;
             endif;
             /** 
@@ -382,8 +382,8 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     $ini = microtime(true); // Iniciamos el contador de tiempo
                     $textError = "Error -> El legajo $value[legajo] tiene fecha de cierre en el periodo \"$value[fecha_desde] al $value[fecha_hasta]\"";
 
-                    fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", 'novErr');
-                    fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk');
+                    fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
+                    fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
 
                     /** Marcamos Con Status (N) en API WF*/
                     $textError = "Error al anular la solicitud $value[id_solicitud]. Periodo cerrado.";
@@ -409,7 +409,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
             
             $eliminarNovedadPeriodo = eliminarNovedadPeriodo($value['legajo'], $value['fecha_desdeStr'], $value['fecha_hastaStr'], $value['CodNov'], $link); // Eliminamos la novedad del periodo
             if ($eliminarNovedadPeriodo) { // Si se elimino la novedad de la tabla FICHAS3
-                fileLogs("Novedad \"($value[CodNov])\" $value[NovDesc]. Fecha: \"$value[fecha_desde] a $value[fecha_hasta]\" eliminada en CH", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+                fileLogs("Novedad \"($value[CodNov])\" $value[NovDesc]. Fecha: \"$value[fecha_desde] a $value[fecha_hasta]\" eliminada en CH", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Guardamos el texto de la novedad en el archivo de log
                 audito_ch("B", 'Baja Novedad (' . $value['CodNov'] . ') Legajo ' . $value['legajo']  . '. Fecha: ' . $value['fecha_desde'] . ' a ' . $value['fecha_hasta'], $link); // Audito la baja de novedad en CH
 
                 /** 
@@ -426,13 +426,13 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                         $durProc    = (round($finProc - $iniProc, 2)); // Duracion de de proceso de la novedad
                         $textNov = 'Periodo "' . $value['fecha_desde'] . ' a ' . $fechaHastaProc . '" procesado. Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '" Dur: ' . $durProc; // Texto de la novedad ingresada para gardar en el log
                         $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log"; // Ruta del archivo de log
-                        fileLogs($textNov, $pathLog, 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+                        fileLogs($textNov, $pathLog, ''); // Guardamos el texto de la novedad en el archivo de log
                         audito_ch("P", "Proceso de Datos Legajo $value[legajo]. Desde: $value[fecha_desde] a $fechaHastaProc", $link);
                     else :
                         $terminadoProc = false; // Se cambia la bandera
                         $textNov = 'Fecha: "' . $fechaCarga . '". Procesada  "NO". Legajo "(' . $value['legajo'] . ') ' . trim($value['ApNo']) . '. " Dur: ' . $durProc; // Texto de la novedad ingresada para gardar en el log
                         $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_error.log"; // Ruta del archivo de log
-                        fileLogs($textNov, $pathLog, 'novErr'); // Guardamos el texto de la novedad en el archivo de log
+                        fileLogs($textNov, $pathLog, ''); // Guardamos el texto de la novedad en el archivo de log
                     endif;
                 endif;
                 /** 
@@ -454,7 +454,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
 
             //     $eliminarNovedad = eliminarNovedad($value['legajo'], $fech, $value['CodNov'], $link); // Eliminamos la novedad de la tabla FICHAS3
             //     if ($eliminarNovedad) { // Si se elimino la novedad de la tabla FICHAS3
-            //         fileLogs("Novedad \"($value[CodNov])\" $value[NovDesc] eliminada en CH el \"$fechaCarga\"", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'novOk'); // Guardamos el texto de la novedad en el archivo de log
+            //         fileLogs("Novedad \"($value[CodNov])\" $value[NovDesc] eliminada en CH el \"$fechaCarga\"", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Guardamos el texto de la novedad en el archivo de log
             //         audito_ch("B", 'Baja Novedad (' . $value['CodNov'] . ') Legajo ' . $value['legajo']  . '. Fecha: ' . $fechaCarga, $link); // Audito la baja de novedad en CH
             //     }
             // }
@@ -466,9 +466,11 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
      * 
      */
 }
+$dataApi['count'] = $dataApi['count'] ?? '';
+
 $tiempo_fin = microtime(true);
 $duracion   = (round($tiempo_fin - $tiempo_ini, 2));
-$textFin = "FIN DE PROCESO DE SOLICITUDES. Dur: \"$duracion Segundos\"";
+$textFin = "FIN DE PROCESO DE SOLICITUDES. TOTAL: ($totalData).  Dur: \"$duracion Segundos\"";
 $pathLog = __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log"; // Ruta del archivo de log
 fileLogs($textFin, $pathLog, 'novOk'); // Guardamos el texto de Fin de Proceso de Novedades en el archivo de log
 sqlsrv_close($link);
