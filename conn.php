@@ -67,7 +67,7 @@ if (file_exists($pathConfigData)) : // Si existe archivo de configuraciones
                 $code = $error['code']; // Obtener codigo de error
                 $message = $error['message']; // Obtener mensaje de error
                 $text = "\nSQLSTATE: \"$SQLSTATE\"\ncode: \"$code\"\nMessage: \"$message\"";
-                $text2 = "<pre><br><br>SQLSTATE: <b>$SQLSTATE</b><br>code: <b>$code</b><br>Message: <b>$message</b></pre>";
+                $text2 = "<pre>SQLSTATE: <b>$SQLSTATE</b><br>code: <b>$code</b><br>Message: <b>$message</b></pre>";
                 $text .= ($key === 1) ? "\n----" : '';
                 fileLogs($text, __DIR__ . "/logs/conn/" . date('Ymd') . "_ErrorConnexion.log", 'conErr'); // guarda el error en el log
                 fileLogs($message, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", 'conErr'); // Guardo el log
