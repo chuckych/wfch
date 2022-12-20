@@ -22,16 +22,20 @@ endif;
 /** FIN OBJETO DE PERSONAL */
 /** VERIFICAMOS LAST UPDATE DE PERSONAL */
 $FechaPerDB = (lastUpdateTabla($link, 'PERSONAL')['FechaHora']); // Fecha y hora del personal en la base de datos
-$FechaPerLoc = ($fechaHoraPersonal['FechaHora']); // Fecha y hora del personal en el archivo local
-$objetoLegajosCH = (dataLegajos($link));
 
-if ($FechaPerDB > $FechaPerLoc) : // Si la fecha y hora del personal en la base de datos es mayor que la del archivo local
+$FechaPerLoc = ($fechaHoraPersonal['FechaHora']); // Fecha y hora del personal en el archivo local
+// $objetoLegajosCH = (dataLegajos($link));
+
+$Date_DB = new DateTime($FechaPerDB);
+$Date_Local = new DateTime($FechaPerLoc);
+
+if ($Date_DB->format('Ymdhis') > $Date_Local->format('Ymdhis')) : // Si la fecha y hora del personal en la base de datos es mayor que la del archivo local
     /** CREAMOS OBJETO DE LA TABLA PERSONAL DE CH */
     $objetoLegajosCH = (dataLegajos($link)); // Obtengo los legajos de la tabla control horario para crear un objeto con el Legajo y ApNo
-    fileLogs(json_encode(lastUpdateTabla($link, 'PERSONAL'), JSON_PRETTY_PRINT), __DIR__ . "/logs/data/fechaHoraPersonal.json", ''); // Actualizamos el archivo local con la fecha y hora del personal
-    fileLogs("Se actualizo el archivo \"fechaHoraPersonal.json\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
-    $log = fopen(__DIR__ . "/logs/data/personal.json", 'w'); // abrimos el archivo y sobreescribimos
-    fwrite($log, json_encode($objetoLegajosCH, JSON_PRETTY_PRINT)); // escribimos en el archivo    
+    file_put_contents( __DIR__ . "/logs/data/fechaHoraPersonal.json" , json_encode(lastUpdateTabla($link, 'PERSONAL'),JSON_PRETTY_PRINT), LOCK_EX);
+    fileLogs("Se actualizo el archivo \"fechaHoraPersonal.json\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');    
+    
+    file_put_contents( __DIR__ . "/logs/data/personal.json" , json_encode($objetoLegajosCH, JSON_PRETTY_PRINT), LOCK_EX); // escribimos los legajos. en el archivo
     fileLogs("Se actualizo el archivo \"personal.json\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", '');
 endif;
 /** FIN VERIFICAMOS LAST UPDATE DE PERSONAL */

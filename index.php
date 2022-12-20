@@ -5,7 +5,7 @@ header("Content-Type: application/json; charset=utf-8"); // json response
 header("Access-Control-Allow-Origin: *"); // allow cross-domain requests
 header("Content-Type: text/html; charset=utf-8");
 error_reporting(E_ALL); // Reportar todos Los errores
-ini_set('display_errors', '1'); // 0 - off 1 - on 
+ini_set('display_errors', '0'); // 0 - off 1 - on 
 $tiempo_ini = microtime(true); // Tiempo inicial
 
 $_SERVER["argv"][1] = $_SERVER["argv"][1] ?? "";
@@ -52,8 +52,9 @@ $urlWebService = $dataJson['webService']['url']; // Url del webservice
 $pingApi = (json_decode(pingApi($dataJson['api']['url'] . "?status=Ping", $auth, $proxy), true)); // Ping de la API
 
 if ($pingApi['SUCCESS'] != 'YES') { // Si la respuesta de la pingApi de WF es NO
-    $text = 'Error al conectar con API WF'. ' - ' . $pingApi['ERROR']; // Texto para el log
+    $text = 'Error al conectar con API WF' . ' - ' . $pingApi['ERROR']; // Texto para el log
     fileLogs($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_PingAPI_WF.log", ''); // Guardo el log
+    sendEmail("WFCH -> Error API", "<pre>$text</pre>");
     exit; // Salgo deL SCRIPT
 }
 /** */
@@ -62,6 +63,7 @@ if ($pingApi['SUCCESS'] != 'YES') { // Si la respuesta de la pingApi de WF es NO
 $ping = PingWebService($urlWebService . 'Ping?'); // ping al webservice
 if (!$ping) { // Si no hay conexion con el webservice salimos del script
     respuestaScript('Error al conectar con WebService', 'Error'); // Respuesta del script
+    sendEmail("WFCH -> Error al conectar con WebService", "<pre>$urlWebService - Error</pre>");
     sqlsrv_close($link); // Cerrar conexión a la bd sql
     exit; // Salgo deL SCRIPT
 }
@@ -76,53 +78,54 @@ $textLog   = ''; // Texto para el log
 require __DIR__ . '/novedades.php';  // Novedades
 /** Este objeto devuelve un array con los datos de las novedades de control horario
  *  'CodNov'   => Codigo de Novedad,
-    'NovDesc'  => Descripcion de la Novedad,
-    'CodTipo'  => Codigo de Tipo de Novedad,
-    'TipoDesc' => Descripcion del Tipo de Novedad,
-    'NovID'    => ID de la Novedad,
+ *  'NovDesc'  => Descripcion de la Novedad,
+ *  'CodTipo'  => Codigo de Tipo de Novedad,
+ *  'TipoDesc' => Descripcion del Tipo de Novedad,
+ *   'NovID'    => ID de la Novedad,
  * 
  */
 /**  */
 /** Obtener Personal de CH */
 require __DIR__ . '/personal.php'; // Personal
 /** Este objeto devuelve un array con los datos de los Legajo de control horario
-    'legajo' => 99999999,
-    'ApNo' => 'Nombre y Apellido',
+  *  'legajo' => 99999999,
+  *  'ApNo' => 'Nombre y Apellido',
  */
 /** */
 
 /** LLAMAMOS A LA API DE WF */
 $dataApi = json_decode((apiData($dataJson['api']['url'] . "?status=P,A", $auth, $proxy, 10)), true); // Obtengo los datos de la API WF
 /** Ejemplo de respuesta API 
-     "SUCCESS": "YES",
-    "FAILURE": "NO",
-    "ERROR": "",
-    "count": 1,
-    "data": [
-        {
-        "id_out": "16",
-        "legajo": "9999999",
-        "novedad": "6",
-        "fecha_desde": "2021-07-02",
-        "fecha_hasta": "2021-07-02",
-        "horas": "",
-        "justificacion": "0",
-        "observaciones": "Es una prueba",
-        "dias_laborales": "0",
-        "categoria": "0",
-        "status": "P",
-        "registro": "2021-07-08 10:28:52",
-        "export": null,
-        "usuario_exec": null,
-        "id_solicitud": "221",
-        "usuario_modificacion": null,
-        "fecha_modificacion": null
-        }
+   *  "SUCCESS": "YES",
+   * "FAILURE": "NO",
+   * "ERROR": "",
+   * "count": 1,
+   * "data": [
+   *    {
+   *    "id_out": "16",
+   *    "legajo": "9999999",
+   *    "novedad": "6",
+   *    "fecha_desde": "2021-07-02",
+   *    "fecha_hasta": "2021-07-02",
+   *    "horas": "",
+   *    "justificacion": "0",
+   *    "observaciones": "Es una prueba",
+   *    "dias_laborales": "0",
+   *    "categoria": "0",
+   *    "status": "P",
+   *    "registro": "2021-07-08 10:28:52",
+   *    "export": null,
+   *    "usuario_exec": null,
+   *    "id_solicitud": "221",
+   *    "usuario_modificacion": null,
+   *    "fecha_modificacion": null
+   *    }
  */
 /** CHEQUEAMOS LA RESPUESTA DE LA API DE WF */
 if ($dataApi['SUCCESS'] != 'YES') { // Si la respuesta de la API de WF es NO
     $text = 'Error al obtener los datos de la API WF'; // Texto para el log
     fileLogs($dataApi['ERROR'], __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log", ''); // Guardo el log
+    sendEmail("WFCH -> Error API WF", "<pre>$text</pre>");
     sqlsrv_close($link); // Cierro la conexión MSQL
     exit; // Salgo deL SCRIPT
 }
@@ -171,24 +174,24 @@ foreach ($dataApi['data'] as $key => $value) { // Recorro los datos de la API pa
     ) : // Si cumplen todas las condiciones. Creamos el objeto data.
         $data[] = (array_merge($filtroNovedad, $dataApi, $filtrarLegajo)); // Hacemnos un merge con los datos del 'objetoNovedadesCH' al objeto 'dataApi' y 'objetoLegajosCH'.
         /** Ejemplo del objeto creado.
-          array (
-            'CodNov'         => 301,
-            'NovDesc'        => 'Ausente sin Aviso',
-            'CodTipo'        => 3,
-            'TipoDesc'       => 'Ausencia',
-            'NovID'          => 'AUS',
-            'id_out'         => '2',
-            'fecha_desde'    => '06/09/2019',
-            'fecha_hasta'    => '06/09/2019',
-            'fecha_desdeStr' => '20190906',
-            'fecha_hastaStr' => '20190906',
-            'horas'          => '00:00',
-            'observaciones'  => '',
-            'dias_laborales' => '0',
-            'legajo'         => 9999999,
-            'ApNo'           => 'nombre y apellido',
-            'id_solicitud'   => '215',
-        ),
+         *array (
+         *  'CodNov'         => 301,
+         *  'NovDesc'        => 'Ausente sin Aviso',
+         *  'CodTipo'        => 3,
+         *  'TipoDesc'       => 'Ausencia',
+         *  'NovID'          => 'AUS',
+         *  'id_out'         => '2',
+         *  'fecha_desde'    => '06/09/2019',
+         *  'fecha_hasta'    => '06/09/2019',
+         *  'fecha_desdeStr' => '20190906',
+         *  'fecha_hastaStr' => '20190906',
+         *  'horas'          => '00:00',
+         *  'observaciones'  => '',
+         *  'dias_laborales' => '0',
+         *  'legajo'         => 9999999,
+         *  'ApNo'           => 'nombre y apellido',
+         *  'id_solicitud'   => '215',
+        *),
          */
     else : // Si no cumplen alguna condicion
         $textLog .= 'Nov: ' . $novCodi . '. Leg: ' . $value['legajo'] . '. ' . fechaFormat($value['fecha_desde'], 'd/m/Y') . ' - ' . fechaFormat($value['fecha_hasta'], 'd/m/Y') . ' ID_OUT: ' . $value['id_out'] . '.'; // Texto de Error
@@ -199,14 +202,14 @@ foreach ($dataApi['data'] as $key => $value) { // Recorro los datos de la API pa
         $textLog .= (empty($value['legajo'])) ? ", Legajo vacio. " : '';    // Si el legajo esta vacio
         $textLog .= (!esHora($horasNov)) ? ", Formato de horas erroneo. " : ''; // Si la hora no tiene un formato valido de 00:00
         $textLog .= (fechaFormat($value['fecha_desde'], 'Ymd') > fechaFormat($value['fecha_hasta'], 'Ymd')) ? ", La fecha desde: " . $dataApi['fecha_desde'] . " es mayor que la fecha hasta " . $dataApi['fecha_hasta'] : ""; // Si la fecha desde es mayor a la fecha hasta, Si no, no hacemos nada
-        //$textLog .= "\n"; // Salto de linea
+    //$textLog .= "\n"; // Salto de linea
     endif;
 
     if (!empty($textLog)) {
 
         fileLogs("Error: " . $textLog, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", ''); // Si hay texto de error lo guardamos en el archivo de log
         fileLogs("Error: " . $textLog, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Log de Inicio de Ingreso de Novedades
-
+        //sendEmail("WFCH -> Error", "<pre>$textLog</pre>");
         $jsonData = json_encode(array("legajo" => "$value[legajo]", "fecha" => "$dataApi[fecha_desdeStr]", "novedad" => "$value[novedad]", "status" => "N", "id_out" => "$value[id_out]", "motivo" => urlencode($textLog))); // Creamos el array con los datos de la novedad para enviar a la API
         setErrorApi($jsonData, $value['id_solicitud'], $dataJson['api']['url'], $auth, $proxy);
         $jsonData = json_encode(array("status" => "E", "id_out" => "$value[id_out]")); // Creamos el objeto json para enviarlo al Api
@@ -238,7 +241,8 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     iniPendienteLog($value["id_solicitud"]); // Iniciamos el log de la novedad
                     $ini = microtime(true); // Iniciamos el contador de tiempo
                     $textError = "Error -> El legajo $value[legajo] tiene fecha de cierre en el periodo \"$value[fecha_desde] al $value[fecha_hasta]\"";
-
+                    // sendEmail("WFCH -> Error", "<pre>$textError</pre>");
+                    
                     fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
                     fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
 
@@ -268,6 +272,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                     iniPendienteLog($value["id_solicitud"]); // Iniciamos el log de la novedad
                     $ini = microtime(true); // Iniciamos el contador de tiempo
                     $textError = "El legajo $value[legajo] tiene dias presentes en el periodo $value[fecha_desde] a $value[fecha_hasta]";
+                    //sendEmail("WFCH -> Error", "<pre>$textError</pre>");
 
                     fileLogs($textError, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
                     fileLogs($textError, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
@@ -406,7 +411,7 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
 
             iniPendienteLog($value["id_solicitud"], 'A  = Anulacion'); // Iniciamos el log de la novedad
             $ini = microtime(true); // Iniciamos el contador de tiempo
-            
+
             $eliminarNovedadPeriodo = eliminarNovedadPeriodo($value['legajo'], $value['fecha_desdeStr'], $value['fecha_hastaStr'], $value['CodNov'], $link); // Eliminamos la novedad del periodo
             if ($eliminarNovedadPeriodo) { // Si se elimino la novedad de la tabla FICHAS3
                 fileLogs("Novedad \"($value[CodNov])\" $value[NovDesc]. Fecha: \"$value[fecha_desde] a $value[fecha_hasta]\" eliminada en CH", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Guardamos el texto de la novedad en el archivo de log
@@ -440,10 +445,9 @@ foreach ($data as $key => $value) { // Recorremos el array con los datos del obj
                  * */
                 $jsonData = json_encode(array("status" => "E", "id_out" => "$value[id_out]")); // Creamos el objeto json para enviarlo al Api
                 setExportadoApi($jsonData, $value['id_solicitud'], $dataJson['api']['url'], $auth, $proxy);
-    
-                finPendienteLog($ini, $value["id_solicitud"], 'A  = Anulacion'); // Guardamos el texto de Fin ID Registro WF en el archivo de log
-            }else{
 
+                finPendienteLog($ini, $value["id_solicitud"], 'A  = Anulacion'); // Guardamos el texto de Fin ID Registro WF en el archivo de log
+            } else {
             }
 
             // foreach ($arrayFechas as $fech) {

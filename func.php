@@ -1,10 +1,13 @@
 ﻿<?php
-function version() {
-    return "1.0.20";
+function version()
+{
+    return "1.1.2";
 }
 function defaultConfigData() // default config data
-{ $datos=array('mssql'=>array('srv'=>'', 'db'=>'', 'user'=>'', 'pass'=>''), 'logConexion'=>array('success'=>false, 'error'=>true), 'api'=>array('url'=>"https://hr-process.com/hrctest/api/novedades/", 'user'=>'admin', 'pass'=>'admin'), 'webService'=>array('url'=>"http://localhost:6400/RRHHWebService/"), 'logNovedades'=>array('success'=>true, 'error'=>true), 'proxy'=>array('ip'=>'', 'port'=>'', 'enabled'=>false), 'borrarLogs'=>array('estado'=>true, 'dias'=>31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
-);
+{
+    $datos = array(
+        'mssql' => array('srv' => '', 'db' => '', 'user' => '', 'pass' => ''), 'logConexion' => array('success' => false, 'error' => true), 'api' => array('url' => "https://hr-process.com/hrctest/api/novedades/", 'user' => 'admin', 'pass' => 'admin'), 'webService' => array('url' => "http://localhost:6400/RRHHWebService/"), 'logNovedades' => array('success' => true, 'error' => true), 'proxy' => array('ip' => '', 'port' => '', 'enabled' => false), 'borrarLogs' => array('estado' => true, 'dias' => 31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
+    );
     return $datos;
 }
 function test_input($data) // Funcion para limpiar los datos de entrada
@@ -260,6 +263,8 @@ function pingApi($url, $auth, $proxy, $timeout = 10) // Función para verificar 
         $durPingApiWF = (round($finPingApiWF - $iniPingApiWF, 2)); // Obtenemos la duracion de la conexion en segundos
 
         $text = "cURL Error ($curl_errno): $curl_error"; // set error message
+        sendEmail("WFCH -> Error API WF", "<pre>$text</pre>");
+
         fileLog($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorPingAPI_WF.log"); // escribir en el log
         fileLog("Duracion Ping ApiWF $durPingApiWF segundos.", __DIR__ . "/logs/errores/" . date('Ymd') . "_errorPingAPI_WF.log"); // escribir en el log
         fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
@@ -451,6 +456,7 @@ function pingWebService($url) // Funcion para validar que el Webservice de Contr
     $curl_error = curl_error($ch); // get error information
     if ($curl_errno > 0) { // si hay error
         $text = "Error Ping WebService. \"Cod: $curl_errno: $curl_error\""; // set error message
+        sendEmail("WFCH -> Error Ping WebService", "<pre>$text</pre>");
         fileLog($text, __DIR__ . '/logs/errores/' . date('Ymd') . '_errorWebService.log'); // escribir en el log
         fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
         $finPingWebService = microtime(true); // Terminamos el contador de tiempo de conexion
@@ -718,7 +724,7 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
     $logConnErr     = $dataConfig['logConexion']['error'];
     $date     = date('d-m-Y H:i:s'); // obtenemos la fecha actual
     $textJson = $text; // obtenemos el texto a escribir
-    $text2    = $text. "\n"; // armamos el texto a escribir
+    $text2    = $text . "\n"; // armamos el texto a escribir
     $text     = $date . ' ' . $text . tipoEjecucion() . "\n"; // armamos el texto a escribir
     switch ($tipo): // según el tipo de log
         case 'novOk': // si es un log de novedades exitosa
@@ -726,7 +732,7 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
                 $log      = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
                 respuestaScript($text2, 'ok');
-                // respuestaScript($text, 'ok'); // Respuesta del script
+            // respuestaScript($text, 'ok'); // Respuesta del script
             endif;
             break;
         case 'novErr': // si es un log de novedades fallida
@@ -970,4 +976,53 @@ function finPendienteLog($ini, $solicitud, $tipo = 'P = Pendiente')
 function iniPendienteLog($solicitud, $tipo = 'P = Pendiente')
 {
     fileLogs("Inicio Registro WF ($tipo). Solicitud: " . $solicitud, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
+}
+function sendEmail($subjet, $body) // Enviar datos a la API
+{
+
+    $pathConfigData = __DIR__ . '/data.php'; // Path to data.php
+    $dataConfig = getDataIni($pathConfigData); // Obtenemos los datos del data.php
+    $dataConfig = parse_ini_file($pathConfigData, true); // Obtenemos los datos del data.php
+    $proxy = array($dataConfig['proxy']['ip'], $dataConfig['proxy']['port'], $dataConfig['proxy']['enabled']); // Proxy datos
+    $url = 'https://ht-api.helpticket.com.ar/sendMail/';
+
+    $data = array(
+        "subjet"  => "$subjet | ".$dataConfig['mssql']['db'],
+        "to"      => "wf-ch",
+        "replyTo" => "wf-ch",
+        "body"    => $body
+    );
+
+    $timeout = $timeout ?? 10;
+    $proxyIP     = $proxy[0]; // IP del proxy
+    $proxyPort   = $proxy[1]; // Puerto del proxy
+    $proxyEnable = $proxy[2]; // Habilitado o no
+    $ch = curl_init(); // initialize curl handle
+    curl_setopt($ch, CURLOPT_URL, $url); // set url to post to
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // return into a variable
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout); // The number of seconds to wait while trying to connect
+    curl_setopt($ch, CURLOPT_HEADER, 0); // set to 0 to eliminate header info from response
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    if ($proxyEnable) { // si hay proxy
+        curl_setopt($ch, CURLOPT_PROXY, $proxyIP); // use this proxy
+        curl_setopt($ch, CURLOPT_PROXYPORT, $proxyPort); // set this proxy's port
+    }
+    $headers = array(
+        'Content-Type:application/json', // Le enviamos JSON al servidor con los datos
+        'Token:38c913f0cf4d1a9e588c687c7f7e9871a52245ac' // token
+    );
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers); // Add headers
+    $data_content = curl_exec($ch); // extract information from response
+    $curl_errno = curl_errno($ch); // get error code
+    $curl_error = curl_error($ch); // get error information
+    if ($curl_errno > 0) { // si hay error
+        $text = "cURL Error ($curl_errno): $curl_error"; // set error message
+        fileLog($text, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorAPI_WF.log"); // escribir en el log
+        fileLog($text, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log
+        respuestaScript($text, 'Error');
+        exit; // salimos del script
+    }
+    curl_close($ch); // close curl handle
+    return ($data_content) ? $data_content : fileLog("No hay datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log") . fileLog("No hay datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
+    exit;
 }
