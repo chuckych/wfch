@@ -12,7 +12,7 @@ function defaultConfigData() // default config data
         'webService' => array('url' => "http://localhost:6400/RRHHWebService/"),
         'logNovedades' => array('success' => true, 'error' => true),
         'proxy' => array('ip' => '', 'port' => '', 'enabled' => false),
-        'borrarLogs' => array('estado' => true, 'dias' => 31), // 'interrumpirSolicitud'=>array('carga'=>true, 'anulacion'=>true)
+        'borrarLogs' => array('estado' => true, 'dias' => 31), // 'interrumpirSolicitud'=>array
     );
     return $datos;
 }
@@ -139,7 +139,7 @@ function eliminarNovedadPeriodo($FicLega, $Ini, $Fin, $FicNove, $link) // Obtien
         fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
     }
 }
-function filtrarObjeto($array, $key, $valor) // Funcion para filtrar un objeto
+function filtrarObjeto($array, $key, $valor) // Función para filtrar un objeto
 {
     $r = array_filter($array, function ($e) use ($key, $valor) {
         return $e[$key] === $valor;
@@ -148,7 +148,7 @@ function filtrarObjeto($array, $key, $valor) // Funcion para filtrar un objeto
         return ($value);
     }
 }
-function descTipoNov($var) // Funcion para obtener la descripcion del tipo de novedad
+function descTipoNov($var) // Función para obtener la descripcion del tipo de novedad
 {
     switch (intval($var)) { // Switch para obtener la descripcion del tipo de novedad
         case 0:
@@ -323,7 +323,7 @@ function tipoEjecucion()  // Función para saber desde donde se ejecta el script
      * los argumentos que se pueden pasar son:
      * - "script=true" para ejecutar el script desde el servidor web
      * - "html=true" para ejecutar el script desde el navegador
-     * - Si se ejecuta el script desde un cron solo poner el parámetro "index.php tarea"  en los argumentos de la accion
+     * - Si se ejecuta el script desde un cron solo poner el parámetro "index.php tarea"  en los argumentos de la acción
      */
     $_GET['script'] = $_GET['script'] ?? false;  // Si no se indica el parámetro script, se asigna false
     $_GET['html'] = $_GET['html'] ?? false; // Si no se indica el parámetro html, se asigna false
@@ -362,7 +362,7 @@ function fileLog($text, $ruta_archivo) // escribir en el log
     fwrite($log, $text);
     fclose($log);
 }
-function json_validate($string) // Funcion para validar la estructura JSON
+function json_validate($string) // Función para validar la estructura JSON
 {
     $result = ($string); // si es un string, retornarlo
     switch (json_last_error()) { // evaluar el error
@@ -387,7 +387,7 @@ function json_validate($string) // Funcion para validar la estructura JSON
             fileLog($error, __DIR__ . "/logs/fichero.log");
             break;
         case JSON_ERROR_UTF8:
-            $error = 'Caracteres UTF-8 malformados, posiblemente codificados de forma incorrecta';
+            $error = 'Caracteres UTF-8 mal-formados, posiblemente codificados de forma incorrecta';
             fileLog($error, __DIR__ . "/logs/fichero.log");
             break;
         default:
@@ -397,17 +397,17 @@ function json_validate($string) // Funcion para validar la estructura JSON
     }
     respuestaScript($error, 'Error');
 }
-function fechaFormat($fecha, $format) // Funcion para formatear fechas
+function fechaFormat($fecha, $format) // Función para formatear fechas
 {
     $fecha = (empty($fecha)) ? '0000-00-00' : $fecha; // si no hay fecha, se asigna a 00/00/00
     $date = date_create($fecha); // crear objeto de fecha
     $FormatFecha = date_format($date, $format); // formatear fecha
     return $FormatFecha; // retornar fecha formateada
 }
-function esHora($hora) // Funcion para validar el formato de las horas
+function esHora($hora) // Función para validar el formato de las horas
 {
     if (preg_match('/^([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$/', $hora)) { // Formato de 24 horas
-        $hora = $hora; // Devuelve la hora correcta
+        // Devuelve la hora correcta
     } else {
         $hora = "00:00"; // Devuelve la hora correcta
     }
@@ -419,7 +419,7 @@ function esHora($hora) // Funcion para validar el formato de las horas
         return false; // Retorna falso
     }
 }
-function horaFormat($value) // Funcion para formatear horas
+function horaFormat($value) // Función para formatear horas
 {
     $value = empty($value) ? '00:00' : $value; // si no hay hora, se asigna a 00:00
     $value = explode(':', $value); // Separo las horas
@@ -428,16 +428,16 @@ function horaFormat($value) // Funcion para formatear horas
     $min = ($min > 59) ? 59 : $min; // Si los minutos son mayores a 59 Pongo a 59 los minutos
     return $hora . ":" . $min; // Retorna la hora formateada
 }
-function esFecha($fecha) // Funcion para validar el formato de las fechas
+function esFecha($fecha) // Función para validar el formato de las fechas
 {
     if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $fecha)) { // Formato de fecha
-        $fecha = $fecha; // Devuelve la fecha correcta
+        // $fecha = $fecha; // Devuelve la fecha correcta
     } else { // Si no es correcta
         $fecha = "0000-00-00"; // Devuelve la fecha correcta
     }
     return $fecha; // Retorna la fecha formateada
 }
-function validar_fecha($fecha) // Funcion para validar la fecha
+function validar_fecha($fecha) // Función para validar la fecha
 {
     $valores = explode('/', $fecha); // Separo los valores de la fecha
     $checkdate = checkdate(intval($valores[1]), intval($valores[0]), intval($valores[2])); // Chequeo la fecha
@@ -446,7 +446,7 @@ function validar_fecha($fecha) // Funcion para validar la fecha
     }
     return false; // Si no es correcta
 }
-function pingWebService($url) // Funcion para validar que el Webservice de Control Horario esta disponible
+function pingWebService($url) // Función para validar que el Webservice de Control Horario esta disponible
 {
     $iniPingWebService = microtime(true); // Iniciamos el contador de tiempo de conexion
     $ch = curl_init(); // Inicializar el objeto curl
@@ -475,13 +475,13 @@ function pingWebService($url) // Funcion para validar que el Webservice de Contr
     $textoErr = "Error -> No hay conexion con WebService: " . $http_code;
     return ($http_code == 201) ? true : fileLog($textoErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log") . respuestaScript($textoErr, 'Error') . fileLog($textoErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');; // escribir en el log
 }
-function respuestaWebService($respuesta) // Funcion para formatear la respuesta del Webservice de Control Horario
+function respuestaWebService($respuesta) // Función para formatear la respuesta del Webservice de Control Horario
 {
     $respuesta = substr($respuesta, 1, -1);
     $respuesta = explode("=", $respuesta);
     return ($respuesta[0]);
 }
-function respuestaProcesoWebService($url) // Funcion para procesar la respuesta del Webservice de Control Horario
+function respuestaProcesoWebService($url) // Función para procesar la respuesta del Webservice de Control Horario
 {
     do { // bucle para verificar el estado del proceso
         $ch = curl_init(); // inicializar curl
@@ -492,7 +492,7 @@ function respuestaProcesoWebService($url) // Funcion para procesar la respuesta 
         return respuestaWebService($respuesta); // retornar el estado del proceso
     } while (respuestaWebService($respuesta) == 'Pendiente'); // bucle hasta que el estado sea diferente de pendiente
 }
-function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $Laboral, $Novedad, $Observaciones, $Horas, $url) // Funcion para ingresar la novedad con el WebService de Control Horario
+function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $Laboral, $Novedad, $Observaciones, $Horas, $url) // Función para ingresar la novedad con el WebService de Control Horario
 {
     $textWF = ($Observaciones == '') ? 'WF Novedades' : '. WF Novedades'; // Concateno texto. WF Novedades a la Observación
     $data = "{Usuario=Script WF, TipoDePersonal=0, LegajoDesde=$LegajoDesde, LegajoHasta=$LegajoHasta, FechaDesde=$FechaDesde, FechaHasta=$FechaHasta, Empresa=0, Planta=0, Sucursal=0, Grupo=0, Sector=0, Seccion=0, Laboral=$Laboral, Novedad=$Novedad,Justifica=0, Observacion=$Observaciones$textWF, Horas=$Horas, Causa=0, Categoria=0}"; // string de datos para enviar a WebService
@@ -536,7 +536,7 @@ function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $
         //respuestaScript($textErr, 'Error'); // retornar error
     }
 }
-function procesarNovedad($legajo, $FechaDesde, $FechaHasta, $url) // Funcion para ingresar la novedad con el WebService de Control Horario
+function procesarNovedad($legajo, $FechaDesde, $FechaHasta, $url) // Función para ingresar la novedad con el WebService de Control Horario
 {
     $data = "{Usuario=Script WF,TipoDePersonal=0,LegajoDesde='$legajo',LegajoHasta='$legajo',FechaDesde='$FechaDesde',FechaHasta='$FechaHasta',Empresa=0,Planta=0,Sucursal=0,Grupo=0,Sector=0,Seccion=0}";
     $ch = curl_init(); // inicializar curl
@@ -582,7 +582,7 @@ function procesarNovedad($legajo, $FechaDesde, $FechaHasta, $url) // Funcion par
         respuestaScript($textErr . $respuesta, 'Error'); // retornar error
     }
 }
-function stringAleatorio($longitud) // Funcion para generar un string aleatorio
+function stringAleatorio($longitud) // Función para generar un string aleatorio
 {
     $caracteres = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'; // caracteres a utilizar
     $string = ''; // variable para almacenar la cadena generada
@@ -591,7 +591,7 @@ function stringAleatorio($longitud) // Funcion para generar un string aleatorio
     }
     return $string; // retornar la cadena generada
 }
-function audito_ch($AudTipo, $AudDato, $link) // Funcion para auditar el control horario
+function audito_ch($AudTipo, $AudDato, $link) // Función para auditar el control horario
 {
     $_SERVER['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'] ?? '::1';
 
@@ -790,10 +790,10 @@ function getDataJson($url) // obtiene el json de la url
             $data = json_decode($data, true); // decodificamos el json
             return $data; // devolvemos el json
         } else { // si el contenido está vacío
-            fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
+            fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log"); // escribimos en el log
         }
     } else { // si no existe el archivo
-        fileLog("No existe archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
+        fileLog("No existe archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log"); // escribimos en el log
         return false; // devolvemos false
     }
 }
@@ -805,10 +805,10 @@ function getDataIni($url) // obtiene el json de la url
             $data = parse_ini_file($url, true); // Obtenemos los datos del data.php
             return $data; // devolvemos el json
         } else { // si el contenido está vacío
-            fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
+            fileLog("No hay informacion en el archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log"); // escribimos en el log
         }
     } else { // si no existe el archivo
-        fileLog("No existe archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log", ''); // escribimos en el log
+        fileLog("No existe archivo \"$url\"", __DIR__ . "/logs/info/" . date('Ymd') . "_informacion.log"); // escribimos en el log
         return false; // devolvemos false
     }
 }
