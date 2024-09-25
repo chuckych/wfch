@@ -216,6 +216,7 @@ function apiData($url, $auth, $proxy, $timeout = 10) // Función para obtener da
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // return into a variable
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout); // The number of seconds to wait while trying to connect
     curl_setopt($ch, CURLOPT_HEADER, 0); // set to 0 to eliminate header info from response
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     if ($proxyEnable) { // si hay proxy
         curl_setopt($ch, CURLOPT_PROXY, $proxyIP); // use this proxy
         curl_setopt($ch, CURLOPT_PROXYPORT, $proxyPort); // set this proxy's port
@@ -254,6 +255,7 @@ function pingApi($url, $auth, $proxy, $timeout = 10) // Función para verificar 
         curl_setopt($ch, CURLOPT_PROXY, $proxyIP); // use this proxy
         curl_setopt($ch, CURLOPT_PROXYPORT, $proxyPort); // set this proxy's port
     }
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     $headers = array(
         'Content-Type:application/json', // Le enviamos JSON al servidor con los datos
         'Authorization: Basic ' . base64_encode($username . ":" . $password) // Basic Authentication
@@ -295,6 +297,7 @@ function sendApiData($url, $auth, $proxy, $timeout, $data) // Enviar datos a la 
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout); // The number of seconds to wait while trying to connect
     curl_setopt($ch, CURLOPT_HEADER, 0); // set to 0 to eliminate header info from response
     curl_setopt($ch, CURLOPT_POSTFIELDS, ($data));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     if ($proxyEnable) { // si hay proxy
         curl_setopt($ch, CURLOPT_PROXY, $proxyIP); // use this proxy
         curl_setopt($ch, CURLOPT_PROXYPORT, $proxyPort); // set this proxy's port
@@ -454,6 +457,7 @@ function pingWebService($url) // Función para validar que el Webservice de Cont
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Establecer que retorne el contenido del servidor
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); // The number of seconds to wait while trying to connect
     curl_setopt($ch, CURLOPT_HEADER, 0); // set to 0 to eliminate header info from response
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     $response = curl_exec($ch); // extract information from response
     $curl_errno = curl_errno($ch); // get error code
     $curl_error = curl_error($ch); // get error information
@@ -487,6 +491,7 @@ function respuestaProcesoWebService($url) // Función para procesar la respuesta
         $ch = curl_init(); // inicializar curl
         curl_setopt($ch, CURLOPT_URL, $url); // set url to post to
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // return the transfer as a string
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $respuesta = curl_exec($ch); // ejecutar curl
         curl_close($ch); // cerrar curl
         return respuestaWebService($respuesta); // retornar el estado del proceso
@@ -500,7 +505,8 @@ function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $
     curl_setopt($ch, CURLOPT_URL, $url . "Novedades"); // agregar el parámetro Novedades a la URL del WebService para identificar el tipo de comando a enviar
     curl_setopt($ch, CURLOPT_POST, TRUE); // establecer el método de envío de datos a post
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);  // establecer los datos a enviar
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // establecer que retorne el contenido del servidor
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // establecer que retorne el contenido del servidor
     $respuesta = curl_exec($ch); // ejecutar curl
     $curl_errno = curl_errno($ch); // get error code
     $curl_error = curl_error($ch); // get error information
@@ -544,6 +550,7 @@ function procesarNovedad($legajo, $FechaDesde, $FechaHasta, $url) // Función pa
     curl_setopt($ch, CURLOPT_POST, TRUE); // establecer el método de envío de datos a post
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);  // establecer los datos a enviar
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // establecer que retorne el contenido del servidor
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     $respuesta = curl_exec($ch); // ejecutar curl
     $curl_errno = curl_errno($ch); // get error code
     $curl_error = curl_error($ch); // get error information
@@ -1010,6 +1017,7 @@ function sendEmail($subject, $body) // Enviar datos a la API
     curl_setopt($ch, CURLOPT_URL, $url); // set url to post to
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // return into a variable
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout); // The number of seconds to wait while trying to connect
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_HEADER, 0); // set to 0 to eliminate header info from response
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     if ($proxyEnable) { // si hay proxy
