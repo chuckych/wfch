@@ -1,7 +1,7 @@
 ﻿<?php
 function version()
 {
-    return "1.1.2";
+    return "1.1.18";
 }
 function defaultConfigData() // default config data
 {
