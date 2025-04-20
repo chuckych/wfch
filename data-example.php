@@ -5,9 +5,9 @@
 ; 
 [mssql]
 srv = "."
-db = "Recursos_HRC60"
+db = "Recursos"
 user = "sa"
-pass = "sa2019"
+pass = ""
 [logConexion]
 success =
 error = "1"

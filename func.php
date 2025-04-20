@@ -24,18 +24,35 @@ function test_input($data) // Función para limpiar los datos de entrada
 }
 function dataNovedades($link) // Obtiene los datos de las novedades de la base de datos CH
 {
-    $params = array();
-    $options = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
+    $params = [];
+    $options = ["Scrollable" => SQLSRV_CURSOR_KEYSET];
     $query = "SELECT NOVEDAD.NovTipo, NOVEDAD.NovCodi, NOVEDAD.NovDesc, NOVEDAD.NovID FROM NOVEDAD WHERE NOVEDAD.NovCodi > 0";
     $stmt = sqlsrv_query($link, $query, $params, $options);
     while ($row = sqlsrv_fetch_array($stmt)) {
-        $data[] = array(
+        $data[] = [
             'CodNov' => $row['NovCodi'], // Codigo de la novedad
             'NovDesc' => $row['NovDesc'], // Descripcion de la novedad
             'CodTipo' => $row['NovTipo'], // Codigo del tipo de novedad
             'TipoDesc' => descTipoNov($row['NovTipo']), // Descripcion del tipo de novedad
             'NovID' => $row['NovID'] // ID de la novedad
-        );
+        ];
+    }
+    sqlsrv_free_stmt($stmt);
+    return $data;
+    // sqlsrv_close($link);
+}
+function dataNovedadesOtras($link) // Obtiene los datos de las novedades de la base de datos CH
+{
+    $params = [];
+    $options = ["Scrollable" => SQLSRV_CURSOR_KEYSET];
+    $query = "SELECT * FROM OTRASNOV WHERE OTRASNOV.ONovCodi > 0";
+    $stmt = sqlsrv_query($link, $query, $params, $options);
+    while ($row = sqlsrv_fetch_array($stmt)) {
+        $data[] = [
+            'CodNov' => $row['ONovCodi'], // Codigo de la novedad
+            'NovDesc' => $row['ONovDesc'], // Descripcion de la novedad
+            'CodTipo' => $row['ONovTipo'], // Codigo del tipo de novedad. Retorna 0 o 1
+        ];
     }
     sqlsrv_free_stmt($stmt);
     return $data;
@@ -43,11 +60,11 @@ function dataNovedades($link) // Obtiene los datos de las novedades de la base d
 }
 function perCierreFech($FechaStr, $Legajo, $link)
 {
-    $params = array();
-    $options = array("Scrollable" => SQLSRV_CURSOR_KEYSET);
+    $params = [];
+    $options = ["Scrollable" => SQLSRV_CURSOR_KEYSET];
     $query = "SELECT TOP 1 CierreFech FROM PERCIERRE WHERE PERCIERRE.CierreLega = '$Legajo'";
+
     $stmt = sqlsrv_query($link, $query, $params, $options);
-    // print_r($query); exit;
     while ($row = sqlsrv_fetch_array($stmt)) {
         $perCierre = $row['CierreFech']->format('Ymd');
     }
@@ -58,7 +75,6 @@ function perCierreFech($FechaStr, $Legajo, $link)
         return $perCierre;
     } else {
         $query = "SELECT ParCierr FROM PARACONT WHERE ParCodi = 0 ORDER BY ParCodi";
-        // print_r($query); exit;
         $stmt = sqlsrv_query($link, $query, $params, $options);
         while ($row = sqlsrv_fetch_array($stmt)) {
             $ParCierr = $row['ParCierr']->format('Ymd');
@@ -68,7 +84,6 @@ function perCierreFech($FechaStr, $Legajo, $link)
         if ($FechaStr <= $ParCierr) {
             return $ParCierr;
         } else {
-            sqlsrv_close($link);
             return false;
         }
     }
@@ -137,6 +152,63 @@ function eliminarNovedadPeriodo($FicLega, $Ini, $Fin, $FicNove, $link) // Obtien
         }
         fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
         fileLogs("Error al eliminar Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
+    }
+}
+function eliminarOtraNovedadPeriodo($FicLega, $Ini, $Fin, $FicNove, $link) // Obtiene los legajos de la base de datos CH
+{
+    $params = [];
+    $options = ["Scrollable" => SQLSRV_CURSOR_KEYSET];
+
+    $query = "DELETE FROM FICHAS2 WHERE FICHAS2.FicLega = '$FicLega' AND FICHAS2.FicFech BETWEEN '$Ini' AND '$Fin' AND FICHAS2.FicONov = '$FicNove'";
+    $stmt = sqlsrv_query($link, $query, $params, $options);
+    if ($stmt) {
+        return true;
+    } else {
+        if (($errors = sqlsrv_errors()) != null) {
+            foreach ($errors as $error) {
+                $mensaje = explode(']', $error['message']);
+                $data[] = $mensaje[3];
+            }
+        }
+        fileLogs("Error al eliminar Otra Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
+        fileLogs("Error al eliminar Otra Novedad desde $Ini a $Fin. $data[0]", __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
+    }
+}
+function insertarOtrasNovedades($FicFech, $FicLega, $FicONov, $FicValor, $FicObsN, $link)
+{
+    $query = "INSERT INTO FICHAS2 (FicLega, FicFech, FicTurn, FicONov, FicValor, FicObsN, FechaHora, FicUsua) VALUES (?, ?, ?, ?, ?, ?, getdate(), ?)";
+    $textWF = ($FicObsN == '') ? 'WF Novedades' : '. WF Novedades'; // Concateno texto. WF Novedades a la Observación
+    // Preparar los parámetros
+    $params = [$FicLega, $FicFech, 1, $FicONov, $FicValor, "{$FicObsN}{$textWF}", 'Script WF'];
+
+    // Opciones (considera si SQLSRV_CURSOR_KEYSET es necesario para un INSERT)
+    $options = ["Scrollable" => SQLSRV_CURSOR_KEYSET];
+
+    // Ejecutar la consulta una sola vez con los parámetros correctos
+    $stmt = sqlsrv_query($link, $query, $params, $options);
+
+    if ($stmt === false) { // Comprobar si la ejecución falló
+        $errors = sqlsrv_errors();
+        $errorMessages = [];
+        if ($errors != null) {
+            foreach ($errors as $error) {
+                // Loguear el error completo para depuración
+                // fileLogs("Error SQL Server: " . print_r($error, true), __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
+                $mensajeParts = explode(']', $error['message']);
+                // Usar el mensaje completo si no se puede parsear
+                $errorMessages[] = isset($mensajeParts[3]) ? trim($mensajeParts[3]) : $error['message'];
+            }
+        }
+        $logMessage = "Error al insertar Otras Novedades. Leg: $FicLega, Fecha: $FicFech. Error: " . implode('; ', $errorMessages);
+
+        fileLogs($logMessage, __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", '');
+        fileLogs($logMessage, __DIR__ . "/logs/errores/" . date('Ymd') . "_error.log", '');
+        return false; // Indicar fallo
+    } else {
+        audito_ch("A", "Otras Novedad ({$FicONov}). $FicLega fecha $FicFech, valor $FicValor.", $link);
+        fileLogs("Otras Novedad ({$FicONov}) insertada de $FicLega fecha $FicFech, valor $FicValor.", __DIR__ . "/logs/novedades/" . date('Ymd') . "_novedad.log", ''); // Loguear el éxito
+        sqlsrv_free_stmt($stmt); // Liberar recursos
+        return true; // Indicar éxito
     }
 }
 function filtrarObjeto($array, $key, $valor) // Función para filtrar un objeto
@@ -477,7 +549,8 @@ function pingWebService($url) // Función para validar que el Webservice de Cont
     curl_close($ch); // close curl handle
     //return curl_getinfo($ch, CURLINFO_HTTP_CODE); // retornar el codigo de respuesta
     $textoErr = "Error -> No hay conexion con WebService: " . $http_code;
-    return ($http_code == 201) ? true : fileLog($textoErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log") . respuestaScript($textoErr, 'Error') . fileLog($textoErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');; // escribir en el log
+    return ($http_code == 201) ? true : fileLog($textoErr, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log") . respuestaScript($textoErr, 'Error') . fileLog($textoErr, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
+    ; // escribir en el log
 }
 function respuestaWebService($respuesta) // Función para formatear la respuesta del Webservice de Control Horario
 {
@@ -521,7 +594,8 @@ function ingresarNovedad($LegajoDesde, $LegajoHasta, $FechaDesde, $FechaHasta, $
     $hashtag = stringAleatorio(4); // generar un hashtag aleatorio
     if ($http_code == 404) { // si el codigo de respuesta es 404 Not Found
         fileLog("#" . $hashtag . " Error al conectar con Novedades WebService: " . $http_code . ' Not Found ' . $respuesta, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
-    };
+    }
+    ;
     curl_close($ch);  // cerrar curl
 
     $processID = respuestaWebService($respuesta); // obtengo el id del proceso
@@ -567,7 +641,8 @@ function procesarNovedad($legajo, $FechaDesde, $FechaHasta, $url) // Función pa
         fileLog($textErr . $respuesta, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorWebService.log"); // escribir en el log
         fileLog($textErr . $respuesta, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
         respuestaScript($textErr . $respuesta, 'Error'); // retornar error
-    };
+    }
+    ;
     curl_close($ch);  // cerrar curl
 
     $processID = respuestaWebService($respuesta); // obtengo el id del proceso
@@ -598,40 +673,41 @@ function stringAleatorio($longitud) // Función para generar un string aleatorio
     }
     return $string; // retornar la cadena generada
 }
-function audito_ch($AudTipo, $AudDato, $link) // Función para auditar el control horario
+function getClientIP()
 {
-    $_SERVER['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'] ?? '::1';
-
-    $ipCliente = $_SERVER['REMOTE_ADDR']; // obtengo la ip del cliente
-    switch ($ipCliente) { // verifico la ip del cliente
-        case '::1': // si es localhost
-            $ipCliente = ('127.0.0.1'); // seteo la ip localhost
-            break;
-        default:
-            $ipCliente = ($_SERVER['REMOTE_ADDR']); // seteo la ip del cliente
-            break;
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $ip = trim($ips[0]);
+    } else {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
     }
+
+    return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : null;
+}
+function audito_ch_old($AudTipo, $AudDato, $link) // Función para auditar el control horario
+{
+    $ipCliente = getClientIP() ?? '127.0.0.1'; // obtengo la ip del cliente
 
     $ipCliente = substr($ipCliente, 0, 20);
     $AudUser = 'Script WF'; // usuario que realiza la acción
     $AudTerm = $ipCliente;
     $AudModu = 21; // modulo en el que se realiza la acción
-    $FechaHora = fechaHora();
+    $FechaHora = "getdate()";
     $AudFech = fechaHora();
     $AudHora = date('H:i:s'); // obtengo la hora actual
 
-    $procedure_params = array( // parámetros del procedimiento almacenado
-        array(&$AudFech),
-        array(&$AudHora),
-        array(&$AudUser),
-        array(&$AudTerm),
-        array(&$AudModu),
-        array(&$AudTipo),
-        array(&$AudDato),
-        array(&$FechaHora),
-    );
-
-    $sql = "exec DATA_AUDITORInsert @AudFech=?,@AudHora=?,@AudUser=?,@AudTerm=?,@AudModu=?,@AudTipo=?,@AudDato=?,@FechaHora=?"; // procedimiento almacenado
+    $procedure_params = [ // parámetros del procedimiento almacenado
+        [&$AudFech],
+        [&$AudHora],
+        [&$AudUser],
+        [&$AudTerm],
+        [&$AudModu],
+        [&$AudTipo],
+        [&$AudDato],
+        [&$FechaHora],
+        ["(UTC-03:00) Ciudad de Buenos Aires"], // zona horaria
+    ];
+    $sql = "exec DATA_AUDITORInsert @AudFech=?,@AudHora=?,@AudUser=?,@AudTerm=?,@AudModu=?,@AudTipo=?,@AudDato=?,@FechaHora=?, @AudZonaHoraria=?"; // procedimiento almacenado
     $stmt = sqlsrv_prepare($link, $sql, $procedure_params); // ejecuto el procedimiento almacenado
 
     if (sqlsrv_execute($stmt)) { // ejecuto el procedimiento almacenado
@@ -640,12 +716,60 @@ function audito_ch($AudTipo, $AudDato, $link) // Función para auditar el contro
         if (($errors = sqlsrv_errors()) != null) {
             foreach ($errors as $error) {
                 $mensaje = explode(']', $error['message']);
-                $dataAud = array("auditor" => "error", "dato" => $mensaje[3]);
+                $dataAud = ["auditor" => "error", "dato" => $mensaje[3]];
             }
             fileLog('Error Audito: ' . $error['message'], __DIR__ . "/logs/errores/" . date('Ymd') . "_errorAuditor.log"); // escribir en el log
             fileLog('Error Audito: ' . $error['message'], __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
             respuestaScript('Error Audito: ' . $error['message'], 'Error'); // retornar error
         }
+    }
+}
+function audito_ch($AudTipo, $AudDato, $link) // Función para auditar el control horario
+{
+    try {
+        $ipCliente = getClientIP() ?? '127.0.0.1'; // obtengo la ip del cliente
+        $ipCliente = substr($ipCliente, 0, 20);
+        $AudUser = 'Script WF'; // usuario que realiza la acción
+        $AudTerm = $ipCliente;
+        $AudModu = 21; // modulo en el que se realiza la acción
+        $FechaHora = fechaHora();
+        $AudFech = fechaHora();
+        $AudHora = date('H:i:s'); // obtengo la hora actual
+        $AudZonaHoraria = "(UTC-03:00) Ciudad de Buenos Aires"; // zona horaria
+
+        $procedure_params = [ // parámetros del procedimiento almacenado
+            [&$AudFech],
+            [&$AudHora],
+            [&$AudUser],
+            [&$AudTerm],
+            [&$AudModu],
+            [&$AudTipo],
+            [&$AudDato],
+            [&$FechaHora],
+            [&$AudZonaHoraria]
+        ];
+        $sql = "exec DATA_AUDITORInsert @AudFech=?,@AudHora=?,@AudUser=?,@AudTerm=?,@AudModu=?,@AudTipo=?,@AudDato=?,@FechaHora=?, @AudZonaHoraria=?"; // procedimiento almacenado
+        $stmt = sqlsrv_prepare($link, $sql, $procedure_params); // preparo el procedimiento almacenado
+
+        if (!sqlsrv_execute($stmt)) { // ejecuto el procedimiento almacenado
+            $errors = sqlsrv_errors();
+            error_log(print_r($errors, true)); // escribir en el log
+            $errorMsg = '';
+            if ($errors != null) {
+                foreach ($errors as $error) {
+                    $mensaje = explode(']', $error['message']);
+                    $errorMsg = isset($mensaje[3]) ? $mensaje[3] : $error['message'];
+                }
+            }
+            fileLog('Error Audito: ' . $errorMsg, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorAuditor.log");
+            fileLog('Error Audito: ' . $errorMsg, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
+            respuestaScript('Error Audito: ' . $errorMsg, 'Error');
+        }
+    } catch (Throwable $e) {
+        $msg = 'Excepción Audito: ' . $e->getMessage();
+        fileLog($msg, __DIR__ . "/logs/errores/" . date('Ymd') . "_errorAuditor.log");
+        fileLog($msg, __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log');
+        respuestaScript($msg, 'Error');
     }
 }
 function totalDiasFechas($fecha_inicial, $fecha_final) // obtengo los días entre dos fechas
@@ -744,7 +868,7 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
                 $log = fopen($ruta_archivo, 'a'); // abrimos el archivo
                 fwrite($log, $text); // escribimos en el archivo
                 respuestaScript($text2, 'ok');
-            // respuestaScript($text, 'ok'); // Respuesta del script
+                // respuestaScript($text, 'ok'); // Respuesta del script
             endif;
             break;
         case 'novErr': // si es un log de novedades fallida
@@ -781,14 +905,16 @@ function fileLogs($text, $ruta_archivo, $tipo) // escribe  el log de novedades
             respuestaScript($text2, 'ok');
             break;
     endswitch; // fin del switch
-};
+}
+;
 function fileLogsJson($text, $ruta_archivo) // escribe  el log de novedades
 {
     $log = fopen($ruta_archivo, 'a'); // abrimos el archivo
     $textJson = $text; // obtenemos el texto
     $log = fopen($ruta_archivo, 'w'); // abrimos el archivo
     fwrite($log, $textJson); // escribimos en el archivo
-};
+}
+;
 function getDataJson($url) // obtiene el json de la url
 {
     if (file_exists($url)) { // si existe el archivo
@@ -973,7 +1099,7 @@ function setErrorApi($jsonData, $solicitud, $apiUrl, $auth, $proxy)
 function setExportadoApi($jsonData, $solicitud, $apiUrl, $auth, $proxy)
 {
     $sendApiData = sendApiData($apiUrl . "?TYPE=update&data=[$jsonData]", $auth, $proxy, 10, ''); // Enviamos el objeto JSON a la API notificando que se termino de procesar la novedad con status 'E' 
-    $respuesta = (json_decode($sendApiData)); // Decodifico el JSON de la respuesta de la API WF
+    $respuesta = json_decode($sendApiData); // Decodifico el JSON de la respuesta de la API WF
 
     if ($respuesta->SUCCESS == 'YES') {
         $textRespuesta = "Solicitud ($solicitud) actualizada correctamente en WF con status \"E\""; // Texto de la respuesta envío WF
@@ -1042,3 +1168,4 @@ function sendEmail($subject, $body) // Enviar datos a la API
     curl_close($ch); // close curl handle
     return ($data_content) ? $data_content : fileLog("No hay datos en API WF", __DIR__ . "/logs/errores/" . date('Ymd') . "_API_WF.log") . fileLog("No hay datos en API WF", __DIR__ . '/logs/novedades/' . date('Ymd') . '_novedad.log'); // escribir en el log; // si no hay datos, escribir en el log
 }
+$optionEncode = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT;
